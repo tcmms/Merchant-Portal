@@ -2,7 +2,7 @@ import { forwardRef, useImperativeHandle } from 'react'
 import { InputField, Select, Statistic, Table, Tag } from '@tcmms/flock-ds'
 import { Search } from 'lucide-react'
 import { Sidebar } from '../live-orders/components/Sidebar'
-import type { ForcedState, OrderHistoryDevHandle } from '../dev-tools/types'
+import type { ForcedState, PageDevHandle } from '../dev-tools/types'
 import { DevStateOverlay } from '../dev-tools/components/DevStateOverlay'
 
 interface OrderHistoryPageProps {
@@ -89,7 +89,7 @@ const columns = [
   },
 ]
 
-export const OrderHistoryPage = forwardRef<OrderHistoryDevHandle, OrderHistoryPageProps>(function OrderHistoryPage({ onNavigate, sidebarCollapsed, onSidebarToggle, storeLogo, storeName, forcedState = 'default' }, ref) {
+export const OrderHistoryPage = forwardRef<PageDevHandle, OrderHistoryPageProps>(function OrderHistoryPage({ onNavigate, sidebarCollapsed, onSidebarToggle, storeLogo, storeName, forcedState = 'default' }, ref) {
   useImperativeHandle(ref, () => ({}))
 
   return (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import type React from 'react'
 import { Tooltip } from '@tcmms/flock-ds'
 import { Trash2, RotateCcw, Package, Tag } from 'lucide-react'
 
@@ -21,17 +21,6 @@ export function BulkActionBar({
   onUpdateStocks,
   onUpdatePrices,
 }: BulkActionBarProps) {
-  const [showTooltip, setShowTooltip] = useState(false)
-
-  useEffect(() => {
-    if (selectedCount >= 2 && localStorage.getItem(BULK_TOOLTIP_KEY) !== 'true') {
-      setShowTooltip(true)
-      localStorage.setItem(BULK_TOOLTIP_KEY, 'true')
-      const timer = setTimeout(() => setShowTooltip(false), 4000)
-      return () => clearTimeout(timer)
-    }
-  }, [selectedCount])
-
   return (
     <Tooltip
       title="Choose an action to apply to all selected products."

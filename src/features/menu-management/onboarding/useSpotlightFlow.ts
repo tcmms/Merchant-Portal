@@ -4,7 +4,6 @@ import type { ChecklistItemId } from './checklistConfig'
 
 const KEY_SPOTLIGHT_COMPLETED = 'spotlight_completed'
 const KEY_ONBOARDING_SKIPPED = 'onboarding_skipped'
-const KEY_TOUR_CLOSED = 'tour_closed'
 
 function shouldAutoStart(): boolean {
   // DEV: always start fresh on page load
