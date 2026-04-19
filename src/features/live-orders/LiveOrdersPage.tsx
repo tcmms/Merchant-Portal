@@ -54,7 +54,7 @@ export const LiveOrdersPage = forwardRef<LiveOrdersDevHandle, LiveOrdersPageProp
       label: (
         <span className="flex items-center gap-1.5">
           Needs Action
-          <Badge count={tabCounts.needs_action} color="var(--flock-color-primary)" showZero style={{ boxShadow: 'none' }} />
+          <Badge count={tabCounts.needs_action} color="var(--flock-color-primary)" showZero />
         </span>
       ),
     },
@@ -63,7 +63,7 @@ export const LiveOrdersPage = forwardRef<LiveOrdersDevHandle, LiveOrdersPageProp
       label: (
         <span className="flex items-center gap-1.5">
           Preparing
-          <Badge count={tabCounts.preparing} color="var(--flock-color-fill-secondary)" showZero style={{ color: 'var(--flock-color-text-tertiary)', boxShadow: 'none' }} />
+          <Badge count={tabCounts.preparing} color="var(--flock-color-fill-secondary)" showZero />
         </span>
       ),
     },
@@ -72,7 +72,7 @@ export const LiveOrdersPage = forwardRef<LiveOrdersDevHandle, LiveOrdersPageProp
       label: (
         <span className="flex items-center gap-1.5">
           Ready for Pickup
-          <Badge count={tabCounts.ready_for_pickup} color="var(--flock-color-warning)" showZero style={{ boxShadow: 'none' }} />
+          <Badge count={tabCounts.ready_for_pickup} color="var(--flock-color-warning)" showZero />
         </span>
       ),
     },

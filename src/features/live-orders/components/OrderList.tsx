@@ -67,13 +67,14 @@ export function OrderList({ orders, activeTab, selectedOrderId, onSelectOrder, o
         className="flex items-center gap-2 shrink-0"
         style={{ padding: '12px 16px', borderBottom: '1px solid var(--flock-color-border-secondary)' }}
       >
-        <InputSearch
-          placeholder="Search order, customer..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          size="large"
-          style={{ flex: 1 }}
-        />
+        <div className="flex-1">
+          <InputSearch
+            placeholder="Search order, customer..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            size="large"
+          />
+        </div>
         <Button size="large" icon={<SlidersHorizontal size={15} />}>
           Filter
         </Button>

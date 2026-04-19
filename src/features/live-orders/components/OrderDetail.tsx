@@ -1,6 +1,6 @@
 import { ConfigProvider } from 'antd'
-import { Button, Tag, Empty, Message, CustomerTierBadge, Steps, Tooltip } from '@tcmms/flock-ds'
-import { Printer, Copy, Utensils, MessageSquare, Pencil, Plus, Truck, ShoppingBag, Package, AlertTriangle, User, Phone, MapPin, Clock, Banknote, CreditCard, Wifi, Barcode } from 'lucide-react'
+import { Button, Tag, Empty, Message, CustomerTierBadge, Steps } from '@tcmms/flock-ds'
+import { Printer, Copy, MessageSquare, Pencil, Plus, Truck, ShoppingBag, Package, AlertTriangle, User, Phone, MapPin, Clock, Banknote, CreditCard, Wifi, Barcode } from 'lucide-react'
 import type { Order, DriverStatus, PaymentMethod } from '../types'
 
 interface OrderDetailProps {
@@ -101,7 +101,7 @@ export function OrderDetail({ order, isActioning = false, onAction }: OrderDetai
             <div className="flex items-center gap-2 flex-wrap">
               <MetaCell icon={<User size={14} />} text={order.customer.name} />
               {order.customer.tier !== 'standard' && <CustomerTierBadge tier={order.customer.tier} />}
-              {order.isFirstOrder && <Tag closable={false} style={{ margin: 0 }}>First Order</Tag>}
+              {order.isFirstOrder && <Tag>First Order</Tag>}
             </div>
             <MetaCell
               icon={<Clock size={14} />}

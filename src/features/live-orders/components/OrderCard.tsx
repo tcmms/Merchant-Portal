@@ -143,7 +143,7 @@ function DriverStatusBadge({ status }: { status: OrderStatus }) {
           name="InterfaceEssentialLoadingCircle1Icon"
           size={12}
           className="animate-spin"
-          style={{ color }}
+          color={color}
         />
       )}
       {label}

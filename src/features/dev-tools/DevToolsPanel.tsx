@@ -138,7 +138,7 @@ export function DevToolsPanel({ activePage, forcedState, onForcedStateChange, ac
 function getFlows(
   activePage: Page,
   ref: RefObject<PageDevHandle | null>,
-  onForcedStateChange: (s: ForcedState) => void,
+  _onForcedStateChange: (s: ForcedState) => void,
 ): { label: string; action: () => void }[] {
   const r = ref.current
 
