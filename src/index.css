@@ -1,0 +1,33 @@
+@import "tailwindcss";
+@import '@tcmms/flock-ds/tokens';
+
+@theme {
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+}
+
+/* Alias Tailwind font-mono to flock-ds code token */
+:root {
+  --font-mono: var(--flock-font-family-code);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--flock-color-bg-layout, #F6F6F6);
+  color: var(--flock-color-text, rgba(0, 0, 0, 0.88));
+  font-family: var(--flock-font-family, 'Inter', sans-serif);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.ant-steps-item-icon .ant-steps-icon { font-weight: 600; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--flock-color-border, #D9D9D9); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--flock-color-text-tertiary, rgba(0,0,0,0.45)); }

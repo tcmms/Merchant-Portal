@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\": {\"hookEventName\": \"UserPromptSubmit\", \"additionalContext\": \"IMPORTANT: Before doing anything, read and follow /Users/temirlan/Merchant Portal/CLAUDE.md. It contains critical project instructions, conventions, and requirements that must be followed.\"}}'"
+          }
+        ]
+      }
+    ]
+  }
+}
