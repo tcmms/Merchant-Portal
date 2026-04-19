@@ -1,5 +1,7 @@
 import type { Category } from '../types/catalog'
 
+const base = import.meta.env.BASE_URL
+
 export const MOCK_CATALOG: Category[] = [
   {
     id: 'ps5-exclusives',
@@ -12,7 +14,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-1',
             name: 'God of War Ragnarök',
-            imageUrl: '/games/gow-ragnarok.jpg',
+            imageUrl: `${base}games/gow-ragnarok.jpg`,
             sku: 'SKU-PS5-001',
             barcode: '711719551683',
             stock: 142,
@@ -28,7 +30,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-2',
             name: "Marvel's Spider-Man 2",
-            imageUrl: '/games/spiderman-2.jpg',
+            imageUrl: `${base}games/spiderman-2.jpg`,
             sku: 'SKU-PS5-002',
             barcode: '711719576914',
             stock: 98,
@@ -43,7 +45,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-3',
             name: 'Demon\'s Souls',
-            imageUrl: '/games/demons-souls.jpg',
+            imageUrl: `${base}games/demons-souls.jpg`,
             sku: 'SKU-PS5-003',
             barcode: '711719399988',
             stock: 34,
@@ -59,7 +61,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-4',
             name: 'Returnal',
-            imageUrl: '/games/returnal.jpg',
+            imageUrl: `${base}games/returnal.jpg`,
             sku: 'SKU-PS5-004',
             barcode: '711719826675',
             stock: 61,
@@ -74,7 +76,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-5',
             name: 'Ratchet & Clank: Rift Apart',
-            imageUrl: '/games/ratchet-rift-apart.jpg',
+            imageUrl: `${base}games/ratchet-rift-apart.jpg`,
             sku: 'SKU-PS5-005',
             barcode: '711719836384',
             stock: 77,
@@ -89,7 +91,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-6',
             name: 'Kena: Bridge of Spirits',
-            imageUrl: '/games/kena.jpg',
+            imageUrl: `${base}games/kena.jpg`,
             sku: 'SKU-PS5-006',
             barcode: '812951017474',
             stock: 45,
@@ -106,7 +108,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-7',
             name: 'Deathloop',
-            imageUrl: '/games/deathloop.jpg',
+            imageUrl: `${base}games/deathloop.jpg`,
             sku: 'SKU-PS5-007',
             barcode: '093155173910',
             stock: 0,
@@ -121,7 +123,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-8',
             name: 'Ghost of Tsushima Director\'s Cut',
-            imageUrl: '/games/ghost-tsushima.jpg',
+            imageUrl: `${base}games/ghost-tsushima.jpg`,
             sku: 'SKU-PS5-008',
             barcode: '711719833017',
             stock: 53,
@@ -142,7 +144,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-9',
             name: 'Final Fantasy XVI',
-            imageUrl: '/games/ff16.jpg',
+            imageUrl: `${base}games/ff16.jpg`,
             sku: 'SKU-PS5-009',
             barcode: '662248927015',
             stock: 88,
@@ -157,7 +159,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-10',
             name: 'Elden Ring',
-            imageUrl: '/games/elden-ring.jpg',
+            imageUrl: `${base}games/elden-ring.jpg`,
             sku: 'SKU-PS5-010',
             barcode: '722674121750',
             stock: 112,
@@ -173,7 +175,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-11',
             name: 'Baldur\'s Gate 3',
-            imageUrl: '/games/baldurs-gate-3.jpg',
+            imageUrl: `${base}games/baldurs-gate-3.jpg`,
             sku: 'SKU-PS5-011',
             barcode: '811949033066',
             stock: 74,
@@ -188,7 +190,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-12',
             name: 'Horizon Forbidden West',
-            imageUrl: '/games/horizon-fw.jpg',
+            imageUrl: `${base}games/horizon-fw.jpg`,
             sku: 'SKU-PS5-012',
             barcode: '711719401484',
             stock: 0,
@@ -203,7 +205,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-13',
             name: 'Cyberpunk 2077: Phantom Liberty',
-            imageUrl: '/games/cyberpunk-2077.jpg',
+            imageUrl: `${base}games/cyberpunk-2077.jpg`,
             sku: 'SKU-PS5-013',
             barcode: '816819019276',
             stock: 29,
@@ -218,7 +220,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-14',
             name: 'Star Wars: Jedi Survivor',
-            imageUrl: '/games/jedi-survivor.jpg',
+            imageUrl: `${base}games/jedi-survivor.jpg`,
             sku: 'SKU-PS5-014',
             barcode: '014633741339',
             stock: 66,
@@ -245,7 +247,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-15',
             name: 'EA Sports FC 25',
-            imageUrl: '/games/fc25.jpg',
+            imageUrl: `${base}games/fc25.jpg`,
             sku: 'SKU-MP-001',
             barcode: '014633743029',
             stock: 203,
@@ -260,7 +262,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-16',
             name: 'NBA 2K25',
-            imageUrl: '/games/nba-2k25.jpg',
+            imageUrl: `${base}games/nba-2k25.jpg`,
             sku: 'SKU-MP-002',
             barcode: '710425596773',
             stock: 155,
@@ -275,7 +277,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-17',
             name: 'Gran Turismo 7',
-            imageUrl: '/games/gran-turismo-7.jpg',
+            imageUrl: `${base}games/gran-turismo-7.jpg`,
             sku: 'SKU-MP-003',
             barcode: '711719773503',
             stock: 91,
@@ -290,7 +292,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-18',
             name: 'F1 24',
-            imageUrl: '/games/f1-24.jpg',
+            imageUrl: `${base}games/f1-24.jpg`,
             sku: 'SKU-MP-004',
             barcode: '014633742381',
             stock: 0,
@@ -305,7 +307,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-19',
             name: 'UFC 5',
-            imageUrl: '/games/ufc5.jpg',
+            imageUrl: `${base}games/ufc5.jpg`,
             sku: 'SKU-MP-005',
             barcode: '014633742794',
             stock: 44,
@@ -326,7 +328,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-20',
             name: 'Call of Duty: Black Ops 6',
-            imageUrl: '/games/cod-bo6.jpg',
+            imageUrl: `${base}games/cod-bo6.jpg`,
             sku: 'SKU-MP-006',
             barcode: '047875885431',
             stock: 178,
@@ -341,7 +343,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-21',
             name: 'Destiny 2: The Final Shape',
-            imageUrl: '/games/destiny-2.jpg',
+            imageUrl: `${base}games/destiny-2.jpg`,
             sku: 'SKU-MP-007',
             barcode: '662248929897',
             stock: 56,
@@ -356,7 +358,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-22',
             name: 'Borderlands 4',
-            imageUrl: '/games/borderlands-4.jpg',
+            imageUrl: `${base}games/borderlands-4.jpg`,
             sku: 'SKU-MP-008',
             barcode: '710425599834',
             stock: 33,
@@ -371,7 +373,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-23',
             name: 'Resident Evil 4 Remake',
-            imageUrl: '/games/re4-remake.jpg',
+            imageUrl: `${base}games/re4-remake.jpg`,
             sku: 'SKU-MP-009',
             barcode: '013388560769',
             stock: 82,
@@ -386,7 +388,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-24',
             name: 'Dead Space Remake',
-            imageUrl: '/games/dead-space.jpg',
+            imageUrl: `${base}games/dead-space.jpg`,
             sku: 'SKU-MP-010',
             barcode: '014633742367',
             stock: 38,
@@ -401,7 +403,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-25',
             name: 'Hogwarts Legacy',
-            imageUrl: '/games/hogwarts-legacy.jpg',
+            imageUrl: `${base}games/hogwarts-legacy.jpg`,
             sku: 'SKU-MP-011',
             barcode: '883929791774',
             stock: 124,
@@ -422,7 +424,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-26',
             name: 'Astro Bot',
-            imageUrl: '/games/astro-bot.jpg',
+            imageUrl: `${base}games/astro-bot.jpg`,
             sku: 'SKU-MP-012',
             barcode: '711719576951',
             stock: 117,
@@ -437,7 +439,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-27',
             name: 'It Takes Two',
-            imageUrl: '/games/it-takes-two.jpg',
+            imageUrl: `${base}games/it-takes-two.jpg`,
             sku: 'SKU-MP-013',
             barcode: '014633742985',
             stock: 65,
@@ -452,7 +454,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-28',
             name: 'Little Big Planet 3',
-            imageUrl: '/games/lbp3.jpg',
+            imageUrl: `${base}games/lbp3.jpg`,
             sku: 'SKU-MP-014',
             barcode: '711719397169',
             stock: 0,
@@ -467,7 +469,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-29',
             name: 'Stray',
-            imageUrl: '/games/stray.jpg',
+            imageUrl: `${base}games/stray.jpg`,
             sku: 'SKU-MP-015',
             barcode: '811949034018',
             stock: 48,
@@ -482,7 +484,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-30',
             name: 'Hollow Knight: Silksong',
-            imageUrl: '/games/silksong.jpg',
+            imageUrl: `${base}games/silksong.jpg`,
             sku: 'SKU-MP-016',
             barcode: '810112210061',
             stock: 0,
@@ -509,7 +511,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-31',
             name: 'God of War Ragnarök: Launch Edition',
-            imageUrl: '/games/gow-ragnarok.jpg',
+            imageUrl: `${base}games/gow-ragnarok.jpg`,
             sku: 'SKU-BND-001',
             barcode: '711719551690',
             stock: 22,
@@ -524,7 +526,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-32',
             name: 'Final Fantasy XVI Deluxe Edition',
-            imageUrl: '/games/ff16.jpg',
+            imageUrl: `${base}games/ff16.jpg`,
             sku: 'SKU-BND-002',
             barcode: '662248927039',
             stock: 15,
@@ -539,7 +541,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-33',
             name: "Marvel's Spider-Man 2 Collector's Edition",
-            imageUrl: '/games/spiderman-2.jpg',
+            imageUrl: `${base}games/spiderman-2.jpg`,
             sku: 'SKU-BND-003',
             barcode: '711719576938',
             stock: 8,
@@ -554,7 +556,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-34',
             name: 'Elden Ring Shadow of the Erdtree Edition',
-            imageUrl: '/games/elden-ring.jpg',
+            imageUrl: `${base}games/elden-ring.jpg`,
             sku: 'SKU-BND-004',
             barcode: '722674122801',
             stock: 0,
@@ -569,7 +571,7 @@ export const MOCK_CATALOG: Category[] = [
           {
             id: 'item-35',
             name: 'Hogwarts Legacy Deluxe Edition',
-            imageUrl: '/games/hogwarts-legacy.jpg',
+            imageUrl: `${base}games/hogwarts-legacy.jpg`,
             sku: 'SKU-BND-005',
             barcode: '883929791781',
             stock: 41,
