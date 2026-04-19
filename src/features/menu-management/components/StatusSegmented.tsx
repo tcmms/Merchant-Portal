@@ -46,9 +46,6 @@ export function StatusSegmented<T extends string>({
             key={option.value}
             title={option.tooltip}
             placement="bottom"
-            mouseEnterDelay={0.3}
-            mouseLeaveDelay={0.1}
-            overlayInnerStyle={{ maxWidth: 220, fontSize: 12, lineHeight: '18px' }}
           >
             <button
               onClick={() => onChange(option.value)}

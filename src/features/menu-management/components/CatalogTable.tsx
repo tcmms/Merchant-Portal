@@ -88,9 +88,6 @@ function TableHeader({ allSelected, someSelected, onSelectAll }: TableHeaderProp
           <Tooltip
             title="Shows how many branches have stock or availability problems. Click any cell to see details per branch."
             placement="bottomLeft"
-            mouseEnterDelay={0.3}
-            mouseLeaveDelay={0.1}
-            overlayInnerStyle={{ maxWidth: 240, fontSize: 12, lineHeight: '18px' }}
           >
             <span className="inline-flex cursor-pointer">
               <Info size={14} aria-hidden="true" style={{ color: '#999999' }} />
@@ -259,9 +256,6 @@ function ItemRow({ item, isSelected, onToggle, onProductClick, onStockClick, onI
         <Tooltip
           title="Select multiple products to update stock, status, or price all at once."
           placement="right"
-          mouseEnterDelay={0.3}
-          mouseLeaveDelay={0.1}
-          overlayInnerStyle={{ maxWidth: 220, fontSize: 12, lineHeight: '18px' }}
         >
           <span>
             <Checkbox checked={isSelected} onChange={onToggle} />
@@ -284,8 +278,6 @@ function ItemRow({ item, isSelected, onToggle, onProductClick, onStockClick, onI
             <Tooltip
               title="Click to see rejection reason and fix it"
               placement="top"
-              mouseEnterDelay={0.5}
-              overlayInnerStyle={{ width: 200, fontSize: 12, lineHeight: '18px' }}
             >
               <a
                 href="#"
@@ -363,9 +355,6 @@ function ItemRow({ item, isSelected, onToggle, onProductClick, onStockClick, onI
           <Tooltip
             title="~ means branches have mixed stock modes. This total includes only branches with exact quantity."
             placement="top"
-            mouseEnterDelay={0.3}
-            mouseLeaveDelay={0.1}
-            overlayInnerStyle={{ maxWidth: 240, fontSize: 12, lineHeight: '18px' }}
           >
             <span className="inline-flex cursor-pointer" onClick={e => e.stopPropagation()}>
               <Info size={14} style={{ color: '#999999' }} />

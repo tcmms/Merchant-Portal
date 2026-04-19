@@ -122,7 +122,7 @@ export function OrderList({ orders, activeTab, selectedOrderId, onSelectOrder, o
           style={{ borderRadius: 0, borderRight: '1px solid var(--flock-color-border)', height: 48, color: 'var(--flock-color-text-tertiary)' }}
         >
           Scheduled Orders
-          <Badge count={0} showZero color="var(--flock-color-fill-secondary)" style={{ color: 'var(--flock-color-text-tertiary)', boxShadow: 'none' }} />
+          <Badge count={0} showZero color="var(--flock-color-fill-secondary)" />
         </Button>
         <Button
           type="text"

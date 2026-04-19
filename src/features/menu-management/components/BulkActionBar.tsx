@@ -36,8 +36,6 @@ export function BulkActionBar({
     <Tooltip
       title="Choose an action to apply to all selected products."
       placement="top"
-      open={showTooltip}
-      overlayInnerStyle={{ maxWidth: 260, fontSize: 12, lineHeight: '18px' }}
     >
     <div
       className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between px-4"

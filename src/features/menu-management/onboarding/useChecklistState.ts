@@ -3,7 +3,6 @@ import { CHECKLIST_ITEMS, DEFAULT_ITEM_STATES, type ChecklistItemId } from './ch
 
 const KEY_ITEMS = 'checklist_items'
 const KEY_COMPLETED = 'checklist_completed'
-const KEY_TOUR_CLOSED = 'tour_closed'
 
 function readItems(): Record<ChecklistItemId, boolean> {
   // DEV: always start fresh on page load

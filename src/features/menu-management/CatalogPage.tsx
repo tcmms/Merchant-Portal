@@ -361,9 +361,6 @@ export const CatalogPage = forwardRef<CatalogDevHandle, CatalogPageProps>(functi
                   <Tooltip
                     title="Filter your catalog by stock status, performance, or promotions to find products faster."
                     placement="bottom"
-                    mouseEnterDelay={0.3}
-                    mouseLeaveDelay={0.1}
-                    overlayInnerStyle={{ maxWidth: 240, fontSize: 12, lineHeight: '18px' }}
                   >
                     <button
                       className="flex items-center h-8 rounded-lg border text-sm font-normal transition-colors hover:brightness-95"
@@ -550,9 +547,6 @@ function FilterChip({ children }: { children: React.ReactNode }) {
     <Tooltip
       title="Filter your catalog by stock status, performance, or promotions to find products faster."
       placement="bottom"
-      mouseEnterDelay={0.3}
-      mouseLeaveDelay={0.1}
-      overlayInnerStyle={{ maxWidth: 240, fontSize: 12, lineHeight: '18px' }}
     >
       <button
         className="flex items-center gap-3 h-8 text-sm font-normal transition-colors hover:bg-gray-50 rounded-lg border"
