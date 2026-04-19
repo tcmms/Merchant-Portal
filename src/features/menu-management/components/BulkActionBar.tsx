@@ -2,7 +2,6 @@ import type React from 'react'
 import { Tooltip } from '@tcmms/flock-ds'
 import { Trash2, RotateCcw, Package, Tag } from 'lucide-react'
 
-const BULK_TOOLTIP_KEY = 'bulk_action_tooltip_shown'
 
 interface BulkActionBarProps {
   selectedCount: number
