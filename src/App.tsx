@@ -47,7 +47,7 @@ export default function App() {
         <LiveOrdersPage ref={liveOrdersRef} forcedState={forcedState} {...sharedSidebarProps} />
       )}
 
-      {import.meta.env.DEV && (
+      {(import.meta.env.DEV || import.meta.env.VITE_GITHUB_PAGES) && (
         <>
           <DevToolsFAB />
           <DevToolsPanel
