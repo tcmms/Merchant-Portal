@@ -1,9 +1,13 @@
 export type OrderStatus =
   | 'needs_action'
   | 'looking_for_driver'
+  | 'scheduled'
   | 'preparing'
   | 'ready_for_pickup'
+  | 'in_delivery'
   | 'cancelled'
+
+export type DeliveryMode = 'snoonu' | 'own'
 
 export type TabId = 'needs_action' | 'preparing' | 'ready_for_pickup'
 
@@ -55,5 +59,7 @@ export interface Order {
   isFirstOrder?: boolean
   customerNote?: string
   prepareByTime?: Date
+  pickupTime?: Date
   driver?: Driver
+  deliveryMode?: DeliveryMode
 }

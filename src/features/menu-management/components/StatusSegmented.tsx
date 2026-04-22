@@ -1,7 +1,7 @@
 import { Tooltip } from '@tcmms/flock-ds'
 
 export interface StatusTab<T extends string> {
-  label: string
+  label: React.ReactNode
   value: T
   badge?: number
   badgeColor?: string

@@ -1,10 +1,12 @@
 import { Button, Icon, CustomerTierBadge } from '@tcmms/flock-ds'
+import { formatPickupTime, pickupUrgencyColor } from '../utils/formatPickupTime'
 import type { Order, OrderStatus, TabId } from '../types'
 
 export interface OrderCardProps {
   order: Order
   isSelected: boolean
   activeTab: TabId
+  isScheduledView?: boolean
   onClick: () => void
   onAction?: () => void
   cardRef?: (el: HTMLButtonElement | null) => void
@@ -15,11 +17,13 @@ const actionLabel: Partial<Record<TabId, string>> = {
   preparing: 'Ready',
 }
 
-export function OrderCard({ order, isSelected, activeTab, onClick, onAction, cardRef }: OrderCardProps) {
+export function OrderCard({ order, isSelected, activeTab, isScheduledView, onClick, onAction, cardRef }: OrderCardProps) {
   const isCancelled = order.status === 'cancelled'
   const itemCount = order.items.reduce((s, i) => s + i.quantity, 0)
+  const isScheduledInNew = activeTab === 'needs_action' && order.pickupTime != null && order.status === 'needs_action'
   const actionText = actionLabel[activeTab]
-  const showAction = actionText && !isCancelled
+  const showAction = actionText && !isCancelled && !isScheduledView
+  const isBlueCta = isScheduledInNew
 
   return (
     <button
@@ -39,7 +43,7 @@ export function OrderCard({ order, isSelected, activeTab, onClick, onAction, car
       }}
       aria-selected={isSelected}
     >
-      {/* Row 1: item count + total (left) | driver status badge (right) */}
+      {/* Row 1: item count + total (left) | status badge (right) */}
       <div className="flex items-center justify-between mb-3">
         <span
           className="text-sm"
@@ -49,7 +53,7 @@ export function OrderCard({ order, isSelected, activeTab, onClick, onAction, car
           <span style={{ margin: '0 4px', color: 'var(--flock-color-text-quaternary)' }}>·</span>
           QR {order.total.toFixed(1)}
         </span>
-        <DriverStatusBadge status={order.status} />
+        {isScheduledInNew || isScheduledView ? <ScheduledTag /> : <DriverStatusBadge status={order.status} />}
       </div>
 
       {/* Row 2: order number (large) */}
@@ -75,13 +79,22 @@ export function OrderCard({ order, isSelected, activeTab, onClick, onAction, car
         </div>
       )}
 
-      {/* Row 4: accept / ready button (right-aligned) */}
+      {/* Row 4: pickup time line (scheduled only) */}
+      {order.pickupTime && (
+        <PickupLine pickup={order.pickupTime} emphasis={isScheduledInNew || isScheduledView} />
+      )}
+
+      {/* Row 5: accept / ready button (right-aligned) */}
       {showAction && (
         <div className="flex justify-end">
           <Button
             type="primary"
             size="middle"
             onClick={(e) => { e.stopPropagation(); onAction?.() }}
+            style={isBlueCta ? {
+              background: 'var(--flock-color-info)',
+              borderColor: 'var(--flock-color-info)',
+            } : undefined}
           >
             {actionText}
           </Button>
@@ -148,6 +161,38 @@ function DriverStatusBadge({ status }: { status: OrderStatus }) {
       )}
       {label}
     </span>
+  )
+}
+
+function ScheduledTag() {
+  return (
+    <span
+      className="flex items-center gap-1 shrink-0"
+      style={{
+        background: 'var(--flock-color-info-bg)',
+        color: 'var(--flock-color-info)',
+        padding: '1px 8px',
+        borderRadius: 'var(--flock-radius-xl)',
+        fontSize: 'var(--flock-font-size-sm)',
+        fontWeight: 'var(--flock-font-weight-medium)',
+        lineHeight: 'var(--flock-line-height-sm)',
+      }}
+    >
+      Scheduled
+    </span>
+  )
+}
+
+function PickupLine({ pickup, emphasis }: { pickup: Date; emphasis?: boolean }) {
+  const { time, relative, urgency } = formatPickupTime(pickup)
+  const accent = emphasis ? pickupUrgencyColor[urgency] : 'var(--flock-color-text-secondary)'
+  return (
+    <div className="flex items-center gap-1.5 mb-3" style={{ fontSize: 13, lineHeight: '20px' }}>
+      <span style={{ color: 'var(--flock-color-text-tertiary)' }}>Pickup:</span>
+      <span style={{ color: accent, fontWeight: 600 }}>{time}</span>
+      <span style={{ color: 'var(--flock-color-text-quaternary)' }}>·</span>
+      <span style={{ color: accent }}>{relative}</span>
+    </div>
   )
 }
 

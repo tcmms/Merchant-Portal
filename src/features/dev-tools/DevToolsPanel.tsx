@@ -150,6 +150,12 @@ function getFlows(
       { label: 'Select first order', action: () => lr.selectFirstOrder() },
       { label: 'Trigger action loading (3s)', action: () => lr.triggerActionLoading() },
       { label: 'Toggle empty state', action: () => lr.showEmptyState() },
+      { label: '🎬 Demo: single-order flow', action: () => lr.enterSingleOrderDemo() },
+      { label: '🚚 Demo: own-delivery flow', action: () => lr.enterOwnDeliveryDemo() },
+      { label: '⏰ Force scheduled → due', action: () => lr.forceFirstScheduledDue() },
+      { label: '🔴 Force scheduled → overdue', action: () => lr.forceFirstScheduledOverdue() },
+      { label: '⏰ Spawn due-scheduled order', action: () => lr.spawnDueScheduled() },
+      { label: '↻ Reset scheduled overrides', action: () => lr.resetScheduledOverrides() },
     ]
   }
 
