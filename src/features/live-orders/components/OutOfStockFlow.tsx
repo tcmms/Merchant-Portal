@@ -383,7 +383,9 @@ function DurationSelector({ value, onChange }: DurationSelectorProps) {
                 idx === options.length - 1 ? 'none' : '1px solid var(--flock-color-split)',
             }}
           >
-            <Radio value={option.key} style={{ marginTop: 3 }} />
+            <span style={{ marginTop: 3, display: 'inline-flex' }}>
+              <Radio value={option.key} />
+            </span>
             <div className="flex flex-col">
               <span
                 style={{

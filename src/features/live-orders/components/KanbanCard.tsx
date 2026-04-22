@@ -99,7 +99,11 @@ export function KanbanCard({ order, onAction, onReject, onClick, compact = false
         {(order.customer.tier !== 'standard' || order.isFirstOrder) && (
           <span className="flex items-center gap-1 shrink-0 flex-wrap">
             {order.customer.tier !== 'standard' && <CustomerTierBadge tier={order.customer.tier} />}
-            {order.isFirstOrder && <Tag color="success" bordered={false} closeIcon={false} style={{ margin: 0 }}>First Order</Tag>}
+            {order.isFirstOrder && (
+              <span style={{ display: 'inline-flex', margin: 0 }}>
+                <Tag color="success" bordered={false} closeIcon={false}>First Order</Tag>
+              </span>
+            )}
           </span>
         )}
       </div>

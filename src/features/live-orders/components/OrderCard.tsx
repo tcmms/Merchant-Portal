@@ -128,6 +128,16 @@ const statusConfig: Record<OrderStatus, { label: string; bg: string; color: stri
     bg: 'var(--flock-color-success-bg)',
     color: 'var(--flock-color-success)',
   },
+  scheduled: {
+    label: 'Scheduled',
+    bg: 'var(--flock-color-info-bg)',
+    color: 'var(--flock-color-info)',
+  },
+  in_delivery: {
+    label: 'In delivery',
+    bg: 'var(--flock-color-info-bg)',
+    color: 'var(--flock-color-info)',
+  },
   cancelled: {
     label: 'Cancelled',
     bg: 'var(--flock-color-error-bg)',

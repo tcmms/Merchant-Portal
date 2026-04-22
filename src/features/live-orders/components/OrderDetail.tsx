@@ -28,7 +28,8 @@ function statusToStep(
       case 'looking_for_driver': return { current: 0 }
       case 'scheduled':          return { current: 1 }
       case 'preparing':          return { current: 2 }
-      case 'ready_for_pickup':   return { current: 3 }
+      case 'ready_for_pickup':
+      case 'in_delivery':        return { current: 3 }
       case 'cancelled':          return { current: 0, error: true }
     }
   }
@@ -37,7 +38,8 @@ function statusToStep(
     case 'looking_for_driver': return { current: 0 }
     case 'scheduled':          return { current: 0 }
     case 'preparing':          return { current: 1 }
-    case 'ready_for_pickup':   return { current: 2 }
+    case 'ready_for_pickup':
+    case 'in_delivery':        return { current: 2 }
     case 'cancelled':          return { current: 0, error: true }
   }
 }
