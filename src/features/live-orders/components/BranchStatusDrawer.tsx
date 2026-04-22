@@ -282,12 +282,13 @@ function BranchRow({
       }}
     >
       <div className="flex items-start gap-3 min-w-0 flex-1">
-        <Checkbox
-          checked={checked}
-          onChange={onToggle}
-          disabled={isClosed}
-          style={{ marginTop: 2 }}
-        />
+        <span style={{ marginTop: 2, display: 'inline-flex' }}>
+          <Checkbox
+            checked={checked}
+            onChange={onToggle}
+            disabled={isClosed}
+          />
+        </span>
         <div className="min-w-0">
           <div
             className="truncate"
