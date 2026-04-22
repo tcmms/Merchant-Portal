@@ -1,22 +1,72 @@
+import { useState } from 'react'
 import { ConfigProvider } from 'antd'
-import { Button, Tag, Empty, Message, CustomerTierBadge, Steps } from '@tcmms/flock-ds'
-import { Printer, Copy, MessageSquare, Pencil, Plus, Truck, ShoppingBag, Package, AlertTriangle, User, Phone, MapPin, Clock, Banknote, CreditCard, Wifi, Barcode } from 'lucide-react'
+import { Button, Tag, Empty, CustomerTierBadge, Steps } from '@tcmms/flock-ds'
+import { toast } from '../utils/toast'
+import { Printer, Copy, MessageSquare, Pencil, Plus, Truck, ShoppingBag, Package, AlertTriangle, User, Phone, MapPin, Clock, Banknote, CreditCard, Wifi, Barcode, Calendar } from 'lucide-react'
 import type { Order, DriverStatus, PaymentMethod } from '../types'
+import { OutOfStockFlow } from './OutOfStockFlow'
+import { formatPickupTime, pickupUrgencyColor } from '../utils/formatPickupTime'
 
 interface OrderDetailProps {
   order: Order | null
   isActioning?: boolean
   onAction?: () => void
+  onCancelOrder?: () => void
+  oosItemIds?: ReadonlySet<string>
+  onMarkOutOfStock?: (itemIds: string[]) => void
+  showStepper?: boolean
 }
 
-function statusToStep(status: Order['status']): { current: number; error?: boolean } {
+function statusToStep(
+  status: Order['status'],
+  hasPickup: boolean,
+): { current: number; error?: boolean } {
+  if (hasPickup) {
+    // Needs Action → Scheduled → Preparing → Ready
+    switch (status) {
+      case 'needs_action':
+      case 'looking_for_driver': return { current: 0 }
+      case 'scheduled':          return { current: 1 }
+      case 'preparing':          return { current: 2 }
+      case 'ready_for_pickup':   return { current: 3 }
+      case 'cancelled':          return { current: 0, error: true }
+    }
+  }
   switch (status) {
     case 'needs_action':
     case 'looking_for_driver': return { current: 0 }
+    case 'scheduled':          return { current: 0 }
     case 'preparing':          return { current: 1 }
     case 'ready_for_pickup':   return { current: 2 }
     case 'cancelled':          return { current: 0, error: true }
-    default:                   return { current: 0 }
+  }
+}
+
+interface PrimaryActionConfig {
+  label: string
+  blue?: boolean
+}
+
+function getPrimaryAction(order: Order): PrimaryActionConfig | null {
+  const now = Date.now()
+  const minutesToPickup = order.pickupTime
+    ? (order.pickupTime.getTime() - now) / 60000
+    : null
+
+  switch (order.status) {
+    case 'needs_action': {
+      const isScheduledIncoming = minutesToPickup != null && minutesToPickup >= 30
+      return { label: 'Accept the Order', blue: isScheduledIncoming }
+    }
+    case 'scheduled': {
+      const isDue = minutesToPickup != null && minutesToPickup <= 30
+      return isDue
+        ? { label: 'Start Now', blue: false }
+        : { label: 'Start Preparation', blue: true }
+    }
+    case 'preparing':        return { label: 'Mark as Ready' }
+    case 'ready_for_pickup': return { label: 'Complete Order' }
+    default: return null
   }
 }
 
@@ -25,7 +75,9 @@ function formatDateTime(date: Date): string {
     ', ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
 }
 
-export function OrderDetail({ order, isActioning = false, onAction }: OrderDetailProps) {
+export function OrderDetail({ order, isActioning = false, onAction, onCancelOrder, oosItemIds, onMarkOutOfStock, showStepper = true }: OrderDetailProps) {
+  const [outOfStockOpen, setOutOfStockOpen] = useState(false)
+
   if (!order) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -35,8 +87,10 @@ export function OrderDetail({ order, isActioning = false, onAction }: OrderDetai
   }
 
   const itemCount = order.items.reduce((s, i) => s + i.quantity, 0)
-  const actions = getActions(order.status)
-  const { current, error } = statusToStep(order.status)
+  const action = getPrimaryAction(order)
+  const hasPickup = order.pickupTime != null
+  const { current, error } = statusToStep(order.status, hasPickup)
+  const canCancel = order.status === 'scheduled'
 
   function handlePrimaryAction() {
     onAction?.()
@@ -56,38 +110,69 @@ export function OrderDetail({ order, isActioning = false, onAction }: OrderDetai
             </span>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Button size="middle" disabled={isActioning} icon={<Package size={14} />}>
+            <Button
+              size="middle"
+              disabled={isActioning}
+              icon={<Package size={14} />}
+              onClick={() => setOutOfStockOpen(true)}
+            >
               Out of Stock
             </Button>
-            {actions && (
+            {canCancel && (
+              <Button
+                size="middle"
+                danger
+                disabled={isActioning}
+                onClick={onCancelOrder}
+              >
+                Cancel Order
+              </Button>
+            )}
+            {action && (
               <Button
                 type="primary"
                 size="middle"
                 loading={isActioning}
                 disabled={isActioning}
                 onClick={handlePrimaryAction}
+                style={
+                  action.blue
+                    ? { background: 'var(--flock-color-info)', borderColor: 'var(--flock-color-info)' }
+                    : undefined
+                }
               >
-                {actions.primary}
+                {action.label}
               </Button>
             )}
           </div>
         </div>
 
+        {/* Pickup block — only for scheduled orders (has pickupTime) */}
+        {hasPickup && <PickupBlock pickup={order.pickupTime!} />}
+
         {/* Steps */}
-        <div className="pt-4 pb-5">
-          <ConfigProvider theme={{ token: { colorTextDisabled: 'rgba(0,0,0,0.12)' } }}>
-            <Steps
-              size="small"
-              current={current}
-              status={error ? 'error' : undefined}
-              items={[
-                { title: <span style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>Needs Action</span> },
-                { title: <span style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>Preparing</span> },
-                { title: <span style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>Ready</span> },
-              ]}
-            />
-          </ConfigProvider>
-        </div>
+        {showStepper && (
+          <div className="pt-4 pb-5">
+            <ConfigProvider theme={{ token: { colorTextDisabled: 'rgba(0,0,0,0.12)' } }}>
+              <Steps
+                size="small"
+                current={current}
+                status={error ? 'error' : undefined}
+                items={hasPickup ? [
+                  { title: <span style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>Needs Action</span> },
+                  { title: <span style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>Scheduled</span> },
+                  { title: <span style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>Preparing</span> },
+                  { title: <span style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>Ready</span> },
+                ] : [
+                  { title: <span style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>Needs Action</span> },
+                  { title: <span style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>Preparing</span> },
+                  { title: <span style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>Ready</span> },
+                ]}
+              />
+            </ConfigProvider>
+          </div>
+        )}
+        {!showStepper && <div className="pb-5" />}
 
       </header>
 
@@ -101,7 +186,24 @@ export function OrderDetail({ order, isActioning = false, onAction }: OrderDetai
             <div className="flex items-center gap-2 flex-wrap">
               <MetaCell icon={<User size={14} />} text={order.customer.name} />
               {order.customer.tier !== 'standard' && <CustomerTierBadge tier={order.customer.tier} />}
-              {order.isFirstOrder && <Tag>First Order</Tag>}
+              {order.isFirstOrder && (
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '2px 10px',
+                    borderRadius: 'var(--flock-radius-full)',
+                    background: 'rgba(0,0,0,0.04)',
+                    color: 'var(--flock-color-text)',
+                    fontSize: 14,
+                    fontWeight: 'var(--flock-font-weight-medium)',
+                    lineHeight: '20px',
+                    fontFamily: 'var(--flock-font-family)',
+                  }}
+                >
+                  First Order
+                </span>
+              )}
             </div>
             <MetaCell
               icon={<Clock size={14} />}
@@ -114,7 +216,7 @@ export function OrderDetail({ order, isActioning = false, onAction }: OrderDetai
             <button
               className="flex items-center gap-2 text-sm w-fit"
               style={{ color: 'var(--flock-color-text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-              onClick={() => { navigator.clipboard.writeText(order.customer.phone); Message.success('Phone copied') }}
+              onClick={() => { navigator.clipboard.writeText(order.customer.phone); toast.success('Phone copied') }}
             >
               <Phone size={14} style={{ color: 'var(--flock-color-text-tertiary)', flexShrink: 0 }} />
               {order.customer.phone}
@@ -132,7 +234,7 @@ export function OrderDetail({ order, isActioning = false, onAction }: OrderDetai
               <button
                 className="flex items-center gap-1.5 text-sm ml-auto"
                 style={{ color: 'var(--flock-color-text-secondary)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                onClick={() => { navigator.clipboard.writeText(order.driver!.phone); Message.success('Phone copied') }}
+                onClick={() => { navigator.clipboard.writeText(order.driver!.phone); toast.success('Phone copied') }}
               >
                 {order.driver.phone}
                 <Copy size={12} style={{ color: 'var(--flock-color-text-quaternary)' }} />
@@ -166,42 +268,63 @@ export function OrderDetail({ order, isActioning = false, onAction }: OrderDetai
           </div>
 
           {/* Items */}
-          {order.items.map((item, idx) => (
-            <div
-              key={item.id}
-              className="flex items-center gap-4 py-3"
-              style={{ borderBottom: idx < order.items.length - 1 ? '1px solid var(--flock-color-split)' : 'none' }}
-            >
-              {item.image ? (
-                <img src={item.image} alt={item.name} className="rounded-xl object-cover shrink-0"
-                  style={{ width: 52, height: 52, background: 'var(--flock-color-border-secondary)' }} />
-              ) : (
-                <div className="rounded-xl flex items-center justify-center shrink-0"
-                  style={{ width: 52, height: 52, background: 'var(--flock-color-border-secondary)' }}>
-                  <Package size={18} style={{ color: 'var(--flock-color-text-quaternary)' }} />
+          {order.items.map((item, idx) => {
+            const isOos = oosItemIds?.has(item.id) ?? false
+            const strike: React.CSSProperties = isOos
+              ? { textDecoration: 'line-through', color: 'var(--flock-color-text-quaternary)' }
+              : {}
+            return (
+              <div
+                key={item.id}
+                className="flex items-center gap-4 py-3"
+                style={{ borderBottom: idx < order.items.length - 1 ? '1px solid var(--flock-color-split)' : 'none' }}
+              >
+                {item.image ? (
+                  <img src={item.image} alt={item.name} className="rounded-xl object-cover shrink-0"
+                    style={{ width: 52, height: 52, background: 'var(--flock-color-border-secondary)', opacity: isOos ? 0.5 : 1 }} />
+                ) : (
+                  <div className="rounded-xl flex items-center justify-center shrink-0"
+                    style={{ width: 52, height: 52, background: 'var(--flock-color-border-secondary)', opacity: isOos ? 0.5 : 1 }}>
+                    <Package size={18} style={{ color: 'var(--flock-color-text-quaternary)' }} />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div
+                    className="mb-1"
+                    style={{
+                      fontSize: 'var(--flock-font-size-xl)',
+                      fontWeight: 'var(--flock-font-weight-bold)',
+                      color: isOos ? 'var(--flock-color-text-quaternary)' : 'var(--flock-color-text)',
+                      textDecoration: isOos ? 'line-through' : 'none',
+                    }}
+                  >
+                    {item.quantity} × {item.name}
+                  </div>
+                  <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--flock-color-text-quaternary)', ...strike }}>
+                    <Barcode size={11} />
+                    {item.barcode}
+                  </div>
                 </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="mb-1" style={{ fontSize: 'var(--flock-font-size-xl)', fontWeight: 'var(--flock-font-weight-bold)', color: 'var(--flock-color-text)' }}>
-                  {item.quantity} × {item.name}
+                <div className="text-right shrink-0" style={{ minWidth: 64 }}>
+                  <div
+                    style={{
+                      fontSize: 'var(--flock-font-size-xl)',
+                      fontWeight: 'var(--flock-font-weight-bold)',
+                      color: isOos ? 'var(--flock-color-text-quaternary)' : 'var(--flock-color-text)',
+                      textDecoration: isOos ? 'line-through' : 'none',
+                    }}
+                  >
+                    QR {item.totalPrice.toFixed(2)}
+                  </div>
+                  <div className="text-xs" style={{ color: 'var(--flock-color-text-tertiary)', ...strike }}>
+                    {item.quantity} × QR {item.unitPrice.toFixed(0)}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--flock-color-text-quaternary)' }}>
-                  <Barcode size={11} />
-                  {item.barcode}
-                </div>
+                <Button type="text" size="small" aria-label="Edit item" icon={<Pencil size={13} />}
+                  style={{ color: 'var(--flock-color-text-quaternary)', flexShrink: 0 }} />
               </div>
-              <div className="text-right shrink-0" style={{ minWidth: 64 }}>
-                <div style={{ fontSize: 'var(--flock-font-size-xl)', fontWeight: 'var(--flock-font-weight-bold)', color: 'var(--flock-color-text)' }}>
-                  QR {item.totalPrice.toFixed(2)}
-                </div>
-                <div className="text-xs" style={{ color: 'var(--flock-color-text-tertiary)' }}>
-                  {item.quantity} × QR {item.unitPrice.toFixed(0)}
-                </div>
-              </div>
-              <Button type="text" size="small" aria-label="Edit item" icon={<Pencil size={13} />}
-                style={{ color: 'var(--flock-color-text-quaternary)', flexShrink: 0 }} />
-            </div>
-          ))}
+            )
+          })}
 
           <div style={{ padding: '12px 0 16px' }}>
             <Button type="dashed" block icon={<Plus size={13} />}
@@ -266,6 +389,14 @@ export function OrderDetail({ order, isActioning = false, onAction }: OrderDetai
         </div>
 
       </div>
+
+      <OutOfStockFlow
+        open={outOfStockOpen}
+        onClose={() => setOutOfStockOpen(false)}
+        items={order.items}
+        orderNumber={order.orderNumber}
+        onSubmit={onMarkOutOfStock}
+      />
     </div>
   )
 }
@@ -280,16 +411,48 @@ function getMinutesLeft(target: Date): number {
   return Math.max(0, Math.floor((target.getTime() - Date.now()) / 60000))
 }
 
-function getActions(status: Order['status']): { primary: string } | null {
-  switch (status) {
-    case 'needs_action':       return { primary: 'Accept the Order' }
-    case 'preparing':          return { primary: 'Mark as Ready' }
-    case 'ready_for_pickup':   return { primary: 'Complete Order' }
-    default: return null
-  }
-}
-
 /* ─── Sub-components ─────────────────────────────────────── */
+
+function PickupBlock({ pickup }: { pickup: Date }) {
+  const { time, relative, urgency } = formatPickupTime(pickup)
+  const accent = pickupUrgencyColor[urgency]
+  const bg = urgency === 'future'
+    ? 'var(--flock-color-info-bg)'
+    : urgency === 'soon'
+      ? 'var(--flock-color-volcano-bg)'
+      : 'var(--flock-color-error-bg)'
+  const label = urgency === 'future'
+    ? 'Scheduled pickup'
+    : urgency === 'soon'
+      ? 'Pickup — start preparing'
+      : 'Pickup overdue'
+  return (
+    <div
+      className="flex items-center gap-3 mt-3"
+      style={{
+        padding: '12px 14px',
+        borderRadius: 12,
+        background: bg,
+        border: `1px solid ${accent}`,
+      }}
+    >
+      <Calendar size={20} style={{ color: accent, flexShrink: 0 }} />
+      <div className="flex flex-col min-w-0">
+        <span style={{ fontSize: 12, fontWeight: 500, color: accent, lineHeight: '16px', letterSpacing: '0.02em', textTransform: 'uppercase' }}>
+          {label}
+        </span>
+        <div className="flex items-baseline gap-2">
+          <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--flock-color-text)', lineHeight: '28px', letterSpacing: '-0.01em' }}>
+            {time}
+          </span>
+          <span style={{ fontSize: 14, fontWeight: 500, color: accent, lineHeight: '20px' }}>
+            {relative}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function MetaCell({ icon, text, accent }: { icon: React.ReactNode; text: string; accent?: boolean }) {
   return (

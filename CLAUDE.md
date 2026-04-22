@@ -4,6 +4,38 @@
 
 ---
 
+## 🛑 0. PRE-FLIGHT: GITHUB ACCOUNT (HARD RULE — NON-NEGOTIABLE)
+
+**Работая в папке `Merchant Portal/` — всегда и только аккаунт `tcmms`. Это жёсткое правило, без исключений.**
+
+Репозиторий `github.com/tcmms/Merchant-Portal` требует scope `workflow` (CI-файлы, GitHub Actions), которого у аккаунта `tcmm9919` нет. Любая операция под `tcmm9919` в этом репо — потенциальный источник:
+- отказов push при затрагивании `.github/workflows/**`,
+- PR/issue/release, опубликованных от чужого имени,
+- коммитов с чужим `author/committer`,
+- token-scope ошибок в CI.
+
+### Обязательный предполётный чек
+
+**Перед первым** `gh ...`, `git push`, `git fetch` с авторизацией, `gh pr …`, `gh issue …`, `gh release …`, `gh workflow …` **в этой сессии:**
+
+1. Проверить активный аккаунт: `gh auth status`.
+2. Если активен не `tcmms` — **немедленно** переключить: `gh auth switch --hostname github.com --user tcmms`.
+3. Убедиться ещё раз: `gh auth status` должен показать `Active account: true` рядом с `tcmms`.
+4. Только после этого выполнять сетевые `gh`/`git` действия.
+
+Для локальных read-only операций (`git status`, `git log`, `git diff`, `gh repo view` без write-scope) чек можно пропустить — но если есть любое сомнение, переключись на `tcmms` превентивно.
+
+### При конфликте
+
+- Если `gh auth switch` не удался (нет сохранённого токена `tcmms`, истёк, нет scope `workflow`) — **остановись и эскалируй пользователю**. Не пытайся обойти через `tcmm9919`, не делай commit/push от не-того аккаунта, не правь `git config user.*` без явной команды.
+- Если git commit уже создан от неправильного аккаунта (`git log -1 --format='%an <%ae>'` показывает не `tcmms`) — сообщи пользователю до push, предложи `git commit --amend --author=...` или `git reset --soft HEAD~1`.
+
+### Git identity
+
+`git config user.email` и `user.name` в этом репо должны соответствовать аккаунту `tcmms`. Никогда не меняй их автоматически — только по явной команде пользователя.
+
+---
+
 ## I. КОГНИТИВНЫЙ ФРЕЙМВОРК (Mental Models)
 
 1. **Composition-First Thinking:** Каждый компонент — изолированная, переиспользуемая единица. Предпочитай `children` и compound patterns пропсовому конфигурированию. Компонент должен делать одну вещь хорошо.
@@ -314,6 +346,7 @@ claude mcp add-json "storybook" '{"command":"npx","args":["-y","storybook-mcp@la
 
 | Версия | Что изменилось |
 |--------|----------------|
+| v6.4 | Добавлен Раздел 0 (Pre-Flight: GitHub Account) — жёсткое правило: в `Merchant Portal/` всегда `gh auth switch` на аккаунт `tcmms` перед любой сетевой `gh`/`git`-операцией. Причина: репо требует scope `workflow`, которого нет у `tcmm9919`. |
 | v6.3 | Раздел VIII переписан: два файла персистентной памяти с чёткими ролями (`ai-context.md` для техопыта, `memory/` для пользовательского контекста). Таблица "что куда сохранять". |
 | v6.2 | Протокол старта переведён на авто-память. Storybook URL → GitHub Pages. Inline стили разрешены для Figma-токенов. Добавлен Figma MCP и figma-pixel-check субагент в раздел X. Исключение для Stories у фича-компонентов. |
 | v6.1 | flock-ds переведён на GitHub Packages (`@tcmms/flock-ds`). Убран Storybook из Merchant Portal. Обновлён раздел IV. |

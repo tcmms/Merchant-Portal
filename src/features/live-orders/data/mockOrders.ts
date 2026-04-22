@@ -3,6 +3,7 @@ import type { Order } from '../types'
 const now = Date.now()
 const mins = (m: number) => new Date(now - m * 60000)
 const eta  = (m: number) => new Date(now + m * 60000)
+const hours = (h: number) => new Date(now + h * 60 * 60000)
 
 const drivers = {
   salman:  { name: 'Salman OG.',  phone: '+97421349023', status: 'on_route'   as const },
@@ -102,7 +103,7 @@ export const MOCK_ORDERS: Order[] = [
       { id: 'na6-i1', quantity: 2, name: 'Five Guys Burger', barcode: '11011', unitPrice: 55, totalPrice: 110, image: img.burger },
       { id: 'na6-i2', quantity: 2, name: 'Cajun Fries', barcode: '11012', unitPrice: 20, totalPrice: 40, image: img.fries },
     ],
-    subtotal: 150, discount: 15, deliveryFee: 18, total: 153, paymentMethod: 'card', createdAt: mins(6), tags: ['No Onion'], isDelivery: true, isFirstOrder: true,
+    subtotal: 150, discount: 15, deliveryFee: 18, total: 153, paymentMethod: 'card', createdAt: mins(6), tags: ['No Onion'], isDelivery: true, isFirstOrder: true, deliveryMode: 'own',
   },
   {
     id: 'na-7', orderNumber: '10281007', status: 'needs_action',
@@ -245,6 +246,62 @@ export const MOCK_ORDERS: Order[] = [
     subtotal: 134, discount: 15, deliveryFee: 18, total: 137, paymentMethod: 'cash', createdAt: mins(55), tags: [], isDelivery: true,
   },
 
+  // ─── SCHEDULED — в NEW таб с pickupTime в будущем ────────────────
+
+  {
+    id: 'sc-1', orderNumber: '10284001', status: 'needs_action',
+    customer: { name: 'Rami B.', phone: '+97455334466', address: 'The Pearl-Qatar, Tower 7, Apt 14', tier: 'gold' },
+    branch: "McDonald's, Al Waab", pickerEmail: 'staff@mcdonalds-waab.com',
+    items: [
+      { id: 'sc1-i1', quantity: 2, name: 'Quarter Pounder', barcode: '44001', unitPrice: 35, totalPrice: 70, image: img.burger },
+      { id: 'sc1-i2', quantity: 2, name: 'Medium Fries', barcode: '44002', unitPrice: 10, totalPrice: 20, image: img.fries },
+    ],
+    subtotal: 90, discount: 0, deliveryFee: 15, total: 105, paymentMethod: 'online', createdAt: mins(4), tags: [], isDelivery: true, pickupTime: hours(4),
+  },
+  {
+    id: 'sc-2', orderNumber: '10284002', status: 'needs_action',
+    customer: { name: 'Ivana K.', phone: '+97430778800', address: 'West Bay, Lagoon Tower, Floor 18', tier: 'platinum' },
+    branch: 'Pizza Hut, The Pearl', pickerEmail: 'staff@pizzahut-pearl.com',
+    items: [
+      { id: 'sc2-i1', quantity: 2, name: 'Large Meat Lovers Pizza', barcode: '44003', unitPrice: 85, totalPrice: 170, image: img.pizza },
+      { id: 'sc2-i2', quantity: 2, name: 'Chicken Wings 6pc', barcode: '44004', unitPrice: 48, totalPrice: 96, image: img.wings },
+    ],
+    subtotal: 266, discount: 26, deliveryFee: 20, total: 260, paymentMethod: 'card', createdAt: mins(9), tags: [], isDelivery: false, pickupTime: hours(19),
+  },
+  {
+    id: 'sc-3', orderNumber: '10284003', status: 'needs_action',
+    customer: { name: 'Tom H.', phone: '+97466001199', address: 'Lusail, Marina, Block 4', tier: 'standard' },
+    branch: 'Five Guys, City Center', pickerEmail: 'staff@fiveguys-cc.com',
+    items: [
+      { id: 'sc3-i1', quantity: 1, name: 'Bacon Cheeseburger', barcode: '44005', unitPrice: 62, totalPrice: 62, image: img.burger },
+      { id: 'sc3-i2', quantity: 1, name: 'Large Cajun Fries', barcode: '44006', unitPrice: 28, totalPrice: 28, image: img.fries },
+    ],
+    subtotal: 90, discount: 0, deliveryFee: 15, total: 105, paymentMethod: 'cash', createdAt: mins(15), tags: ['No Onion'], isDelivery: true, isFirstOrder: true, pickupTime: eta(45),
+  },
+
+  // ─── SCHEDULED — уже принятые, ждут своего часа ──────────────────
+
+  {
+    id: 'sc-4', orderNumber: '10284004', status: 'scheduled',
+    customer: { name: 'Noora Z.', phone: '+97444223311', address: 'Al Sadd, Tower 9, Apt 20', tier: 'splus' },
+    branch: 'Sakura Sushi, West Bay', pickerEmail: 'staff@sakura-westbay.com',
+    items: [
+      { id: 'sc4-i1', quantity: 3, name: 'Salmon Roll 8pc', barcode: '44007', unitPrice: 48, totalPrice: 144, image: img.sushi },
+      { id: 'sc4-i2', quantity: 2, name: 'Miso Soup', barcode: '44008', unitPrice: 18, totalPrice: 36, image: img.soup },
+    ],
+    subtotal: 180, discount: 18, deliveryFee: 15, total: 177, paymentMethod: 'online', createdAt: mins(80), tags: [], isDelivery: true, pickupTime: hours(2),
+  },
+  {
+    id: 'sc-5', orderNumber: '10284005', status: 'scheduled',
+    customer: { name: 'Jake L.', phone: '+97455778833', address: 'Old Airport Road, Bldg 14', tier: 'gold' },
+    branch: 'Nandos, Villaggio', pickerEmail: 'staff@nandos-villaggio.com',
+    items: [
+      { id: 'sc5-i1', quantity: 2, name: 'Whole Chicken Peri Peri', barcode: '44009', unitPrice: 125, totalPrice: 250, image: img.chicken },
+      { id: 'sc5-i2', quantity: 4, name: 'Peri Fries', barcode: '44010', unitPrice: 18, totalPrice: 72, image: img.fries },
+    ],
+    subtotal: 322, discount: 22, deliveryFee: 18, total: 318, paymentMethod: 'card', createdAt: mins(120), tags: ['Extra Hot'], isDelivery: false, pickupTime: hours(6),
+  },
+
   // ─── PREPARING (20) ──────────────────────────────────────────────
 
   {
@@ -306,7 +363,7 @@ export const MOCK_ORDERS: Order[] = [
       { id: 'pr6-i1', quantity: 2, name: 'Buffalo Wings 10pc', barcode: '22012', unitPrice: 55, totalPrice: 110, image: img.wings },
       { id: 'pr6-i2', quantity: 2, name: 'Seasoned Fries', barcode: '22013', unitPrice: 18, totalPrice: 36, image: img.fries },
     ],
-    subtotal: 146, discount: 0, deliveryFee: 15, total: 161, paymentMethod: 'cash', createdAt: mins(11), tags: ['Lemon Pepper'], isDelivery: true,
+    subtotal: 146, discount: 0, deliveryFee: 15, total: 161, paymentMethod: 'cash', createdAt: mins(11), tags: ['Lemon Pepper'], isDelivery: true, deliveryMode: 'own',
   },
   {
     id: 'pr-7', orderNumber: '10282007', status: 'preparing',
@@ -469,7 +526,7 @@ export const MOCK_ORDERS: Order[] = [
       { id: 'rp2-i1', quantity: 2, name: 'Almond Croissant', barcode: '33003', unitPrice: 22, totalPrice: 44, image: img.croissant },
       { id: 'rp2-i2', quantity: 2, name: 'Flat White', barcode: '33004', unitPrice: 20, totalPrice: 40, image: img.coffee },
     ],
-    subtotal: 84, discount: 0, deliveryFee: 10, total: 94, paymentMethod: 'card', createdAt: mins(3), tags: [], isDelivery: false,
+    subtotal: 84, discount: 0, deliveryFee: 10, total: 94, paymentMethod: 'card', createdAt: mins(3), tags: [], isDelivery: true, deliveryMode: 'own',
   },
   {
     id: 'rp-3', orderNumber: '10283003', status: 'ready_for_pickup',
@@ -539,7 +596,7 @@ export const MOCK_ORDERS: Order[] = [
       { id: 'rp9-i1', quantity: 3, name: 'Whopper', barcode: '33017', unitPrice: 30, totalPrice: 90, image: img.burger },
       { id: 'rp9-i2', quantity: 3, name: 'Medium Fries', barcode: '33018', unitPrice: 12, totalPrice: 36, image: img.fries },
     ],
-    subtotal: 126, discount: 0, deliveryFee: 12, total: 138, paymentMethod: 'cash', createdAt: mins(7), tags: [], isDelivery: true,
+    subtotal: 126, discount: 0, deliveryFee: 12, total: 138, paymentMethod: 'cash', createdAt: mins(7), tags: [], isDelivery: true, deliveryMode: 'own',
   },
   {
     id: 'rp-10', orderNumber: '10283010', status: 'ready_for_pickup',
@@ -658,6 +715,7 @@ export function getTabCounts(orders: Order[]) {
     needs_action: orders.filter(
       (o) => o.status === 'needs_action' || o.status === 'looking_for_driver' || o.status === 'cancelled'
     ).length,
+    scheduled: orders.filter((o) => o.status === 'scheduled').length,
     preparing: orders.filter((o) => o.status === 'preparing').length,
     ready_for_pickup: orders.filter((o) => o.status === 'ready_for_pickup').length,
   }

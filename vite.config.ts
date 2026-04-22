@@ -10,6 +10,6 @@ export default defineConfig({
     dedupe: ['react', 'react-dom', 'antd']
   },
   server: {
-    port: 3000,
+    port: 3001,
   },
 });
