@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ConfigProvider } from 'antd'
 import { Button, Tag, Empty, CustomerTierBadge, Steps } from '@tcmms/flock-ds'
 import { toast } from '../utils/toast'
-import { Printer, Copy, MessageSquare, Pencil, Plus, Truck, ShoppingBag, Package, AlertTriangle, User, Phone, MapPin, Clock, Banknote, CreditCard, Wifi, Barcode, Calendar } from 'lucide-react'
+import { Printer, Copy, MessageSquare, Pencil, Plus, Truck, ShoppingBag, Package, AlertTriangle, User, Phone, MapPin, Clock, Banknote, CreditCard, Wifi, Barcode, Calendar, XCircle } from 'lucide-react'
 import type { Order, DriverStatus, PaymentMethod } from '../types'
 import { OutOfStockFlow } from './OutOfStockFlow'
 import { formatPickupTime, pickupUrgencyColor } from '../utils/formatPickupTime'
@@ -15,6 +15,7 @@ interface OrderDetailProps {
   oosItemIds?: ReadonlySet<string>
   onMarkOutOfStock?: (itemIds: string[]) => void
   showStepper?: boolean
+  onDismissCancellation?: () => void
 }
 
 function statusToStep(
@@ -67,7 +68,11 @@ function getPrimaryAction(order: Order): PrimaryActionConfig | null {
         : { label: 'Start Preparation', blue: true }
     }
     case 'preparing':        return { label: 'Mark as Ready' }
-    case 'ready_for_pickup': return { label: 'Complete Order' }
+    case 'ready_for_pickup': {
+      if (!order.isDelivery) return { label: 'Picked Up' } // takeaway: customer collected
+      if (order.deliveryMode === 'own') return { label: 'Picked Up' } // own courier collected
+      return { label: 'Complete Order' }
+    }
     default: return null
   }
 }
@@ -77,8 +82,15 @@ function formatDateTime(date: Date): string {
     ', ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
 }
 
-export function OrderDetail({ order, isActioning = false, onAction, onCancelOrder, oosItemIds, onMarkOutOfStock, showStepper = true }: OrderDetailProps) {
+export function OrderDetail({ order, isActioning = false, onAction, onCancelOrder, oosItemIds, onMarkOutOfStock, showStepper = true, onDismissCancellation }: OrderDetailProps) {
   const [outOfStockOpen, setOutOfStockOpen] = useState(false)
+  const [isInspectingCancellation, setIsInspectingCancellation] = useState(false)
+
+  // Reset the "inspecting" flag when switching to a different order, otherwise a cancelled
+  // order opened after the user clicked View Order on a previous one would show up unblurred.
+  useEffect(() => {
+    setIsInspectingCancellation(false)
+  }, [order?.id])
 
   if (!order) {
     return (
@@ -93,13 +105,27 @@ export function OrderDetail({ order, isActioning = false, onAction, onCancelOrde
   const hasPickup = order.pickupTime != null
   const { current, error } = statusToStep(order.status, hasPickup)
   const canCancel = order.status === 'scheduled'
+  const isCustomerCancelled = order.status === 'cancelled' && order.cancelledBy === 'customer'
+  const showCancelOverlay = isCustomerCancelled && !isInspectingCancellation
 
   function handlePrimaryAction() {
     onAction?.()
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden" style={{ background: 'var(--flock-color-bg-container)' }}>
+    <div className="flex-1 flex flex-col h-full overflow-hidden relative" style={{ background: 'var(--flock-color-bg-container)' }}>
+
+      {/* Wrapper allows blurring the whole detail body without blurring the overlay. */}
+      <div
+        className="flex-1 flex flex-col overflow-hidden"
+        style={{
+          filter: showCancelOverlay ? 'blur(4px)' : 'none',
+          pointerEvents: showCancelOverlay ? 'none' : 'auto',
+          userSelect: showCancelOverlay ? 'none' : 'auto',
+          transition: 'filter 160ms ease',
+        }}
+        aria-hidden={showCancelOverlay}
+      >
 
       {/* ── Header ─────────────────────────────────────────── */}
       <header className="shrink-0" style={{ padding: '20px 20px 0', borderBottom: '1px solid var(--flock-color-split)' }}>
@@ -392,6 +418,15 @@ export function OrderDetail({ order, isActioning = false, onAction, onCancelOrde
 
       </div>
 
+      </div>
+
+      {showCancelOverlay && (
+        <CancelledOrderOverlay
+          onViewOrder={() => setIsInspectingCancellation(true)}
+          onDismiss={() => onDismissCancellation?.()}
+        />
+      )}
+
       <OutOfStockFlow
         open={outOfStockOpen}
         onClose={() => setOutOfStockOpen(false)}
@@ -399,6 +434,73 @@ export function OrderDetail({ order, isActioning = false, onAction, onCancelOrde
         orderNumber={order.orderNumber}
         onSubmit={onMarkOutOfStock}
       />
+    </div>
+  )
+}
+
+function CancelledOrderOverlay({ onViewOrder, onDismiss }: { onViewOrder: () => void; onDismiss: () => void }) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Order cancelled by customer"
+      className="absolute inset-0 flex items-center justify-center"
+      style={{
+        padding: 32,
+        background: 'rgba(255,255,255,0.62)',
+        zIndex: 10,
+      }}
+    >
+      <div
+        className="flex flex-col items-start"
+        style={{
+          gap: 32,
+          padding: 24,
+          maxWidth: 430,
+          width: '100%',
+          background: 'var(--flock-color-bg-container)',
+          borderRadius: 16,
+          boxShadow: '0 20px 48px rgba(0,0,0,0.12), 0 0 0 1px var(--flock-color-border-secondary)',
+        }}
+      >
+        <div
+          className="flex items-center justify-center rounded-full"
+          style={{
+            width: 72,
+            height: 72,
+            background: 'var(--flock-color-error)',
+          }}
+        >
+          <XCircle size={42} color="white" strokeWidth={2.5} />
+        </div>
+        <h3
+          style={{
+            margin: 0,
+            fontSize: 24,
+            lineHeight: '32px',
+            fontWeight: 700,
+            letterSpacing: '-0.5px',
+            color: 'var(--flock-color-text)',
+          }}
+        >
+          Do not prepare this order, this order was cancelled
+        </h3>
+        <div className="flex items-center gap-4">
+          <Button
+            size="large"
+            onClick={onViewOrder}
+            style={{
+              background: 'var(--flock-color-fill-quaternary, #f6f6f6)',
+              borderColor: 'var(--flock-color-fill-quaternary, #f6f6f6)',
+            }}
+          >
+            View Order
+          </Button>
+          <Button type="primary" size="large" danger onClick={onDismiss}>
+            Dismiss
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -468,9 +570,14 @@ function MetaCell({ icon, text, accent }: { icon: React.ReactNode; text: string;
 }
 
 const driverStatusConfig: Record<DriverStatus, { label: string; bg: string; color: string }> = {
-  on_route:   { label: 'On Route',   bg: 'var(--flock-color-warning)', color: '#fff' },
-  arrived:    { label: 'Arrived',    bg: 'var(--flock-color-success)', color: '#fff' },
-  picking_up: { label: 'Picking Up', bg: 'var(--flock-color-info)',    color: '#fff' },
+  looking:          { label: 'Looking for Driver', bg: '#fff4ed',           color: '#fa541c' },
+  on_route:         { label: 'Driver on Route',    bg: '#f0f5ff',           color: '#2f54eb' },
+  nearby:           { label: 'Driver Nearby',      bg: '#fcf0ff',           color: '#9a36d9' },
+  waiting:          { label: 'Driver Waiting',     bg: '#fff2f0',           color: '#ff5558' },
+  arrived:          { label: 'Ready to Pick Up',   bg: '#f0faf4',           color: '#22a06b' },
+  picking_up:       { label: 'Picked Up',          bg: '#f6f6f6',           color: 'rgba(0,0,0,0.88)' },
+  customer_near:    { label: 'Near Customer',      bg: '#e6f7ff',           color: '#0a84ff' },
+  customer_arrived: { label: 'At Customer',        bg: '#f4f0ff',           color: '#5c44f0' },
 }
 
 function DriverStatusBadge({ status }: { status: DriverStatus }) {

@@ -11,6 +11,9 @@ export interface LiveOrdersDevHandle extends PageDevHandle {
   spawnDueScheduled: () => void
   enterSingleOrderDemo: () => void
   enterOwnDeliveryDemo: () => void
+  enterPremiumPriorityDemo: () => void
+  spawnPremiumPriorityOrder: () => void
+  spawnCustomerCancelledOrder: () => void
   resetScheduledOverrides: () => void
 }
 

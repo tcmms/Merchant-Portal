@@ -102,6 +102,30 @@ export const LiveOrdersPage = forwardRef<LiveOrdersDevHandle, LiveOrdersPageProp
       kanbanRef.current?.enterOwnDeliveryDemo()
       toast.success('Own-delivery demo — one order, Picked Up / Delivered buttons enabled')
     },
+    enterPremiumPriorityDemo: () => {
+      if (layoutMode !== 'kanban') {
+        toast.info('Switch to Kanban layout to run the premium-priority demo')
+        return
+      }
+      kanbanRef.current?.enterPremiumPriorityDemo()
+      toast.success('Premium Priority demo — one VIP order with vertical priority strip')
+    },
+    spawnPremiumPriorityOrder: () => {
+      if (layoutMode !== 'kanban') {
+        toast.info('Switch to Kanban layout to spawn premium-priority orders')
+        return
+      }
+      kanbanRef.current?.spawnPremiumPriorityOrder()
+      toast.success('Premium-priority order added alongside existing cards')
+    },
+    spawnCustomerCancelledOrder: () => {
+      if (layoutMode !== 'kanban') {
+        toast.info('Switch to Kanban layout to spawn customer-cancelled orders')
+        return
+      }
+      kanbanRef.current?.spawnCustomerCancelledOrder()
+      toast.warning('Customer cancelled an order — check New column for the struck-through card')
+    },
     resetScheduledOverrides: () => {
       kanbanRef.current?.resetOverrides()
       toast.info('Scheduled overrides cleared')
@@ -119,6 +143,12 @@ export const LiveOrdersPage = forwardRef<LiveOrdersDevHandle, LiveOrdersPageProp
         kanbanRef.current.startPreparation(selectedOrder.id)
       } else if (status === 'preparing') {
         kanbanRef.current.markReady(selectedOrder.id)
+      } else if (status === 'ready_for_pickup') {
+        if (selectedOrder.deliveryMode === 'own') {
+          kanbanRef.current.markPickedUp(selectedOrder.id)
+        } else if (!selectedOrder.isDelivery) {
+          kanbanRef.current.markDelivered(selectedOrder.id)
+        }
       }
       // Close the drawer so the user sees the result in the board.
       setSelectedOrder(null)
@@ -358,6 +388,10 @@ export const LiveOrdersPage = forwardRef<LiveOrdersDevHandle, LiveOrdersPageProp
           onCancelOrder={handleCancelOrder}
           oosItemIds={selectedOosItems}
           onMarkOutOfStock={(ids) => selectedOrder && handleMarkOutOfStock(selectedOrder.id, ids)}
+          onDismissCancellation={() => {
+            if (selectedOrder) kanbanRef.current?.dismissCancellation(selectedOrder.id)
+            setSelectedOrder(null)
+          }}
           showStepper={false}
         />
       </Drawer>

@@ -12,6 +12,10 @@ export interface KanbanBoardHandle {
   spawnDueScheduled: () => void
   enterSingleOrderDemo: () => void
   enterOwnDeliveryDemo: () => void
+  enterPremiumPriorityDemo: () => void
+  spawnPremiumPriorityOrder: () => void
+  spawnCustomerCancelledOrder: () => void
+  dismissCancellation: (id: string) => void
   resetOverrides: () => void
   acceptOrder: (id: string) => void
   startPreparation: (id: string) => void
@@ -60,6 +64,7 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
   const [hideBaseOrders, setHideBaseOrders] = useState(false)
   const [completedIds, setCompletedIds] = useState<string[]>(() => ['rp-1', 'rp-5', 'rp-7', 'rp-9', 'rp-11'])
   const [completedOpen, setCompletedOpen] = useState(false)
+  const [dismissedCancellationIds, setDismissedCancellationIds] = useState<string[]>([])
   const [dragZone, setDragZone] = useState<'progress' | 'ready' | 'completed' | null>(null)
   const [movedAt, setMovedAt] = useState<Record<string, number>>({})
 
@@ -119,7 +124,14 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
     const tickNow = clockTick
     for (const o of resolved) {
       if (completedIds.includes(o.id)) { completed.push(o); continue }
-      if (o.status === 'cancelled') continue
+      if (o.status === 'cancelled') {
+        // Customer-initiated cancellations surface in New until the merchant dismisses
+        // them. Merchant-initiated cancellations (via RejectOrderModal) are dropped.
+        if (o.cancelledBy === 'customer' && !dismissedCancellationIds.includes(o.id)) {
+          newOrders.push(o)
+        }
+        continue
+      }
       if (o.status === 'needs_action') {
         newOrders.push(o)
       } else if (o.status === 'scheduled') {
@@ -129,12 +141,10 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
       } else if (o.status === 'preparing' || o.status === 'looking_for_driver') {
         inProgress.push(o)
       } else if (o.status === 'ready_for_pickup') {
-        // Ready  = cooked, waiting for customer or for courier to arrive
-        // In Delivery = courier has taken the order and is delivering it
-        if (o.driver?.status === 'picking_up') inDelivery.push(o)
-        else ready.push(o)
+        // Ready = kitchen's done, waiting for courier to pick up
+        ready.push(o)
       } else if (o.status === 'in_delivery') {
-        // Own-delivery path: merchant marked Picked Up → courier is delivering.
+        // Courier has picked up the order (Snoonu or own) — in transit to customer.
         inDelivery.push(o)
       }
     }
@@ -173,7 +183,7 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
     })
 
     return { newOrders, scheduled, inProgress, ready, inDelivery, completed }
-  }, [resolved, completedIds, movedAt, clockTick])
+  }, [resolved, completedIds, movedAt, clockTick, dismissedCancellationIds])
 
   const overdueOrders = useMemo(
     () => buckets.newOrders.filter((o) => isScheduledOverdue(o, clockTick)),
@@ -222,6 +232,41 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
     stampMove(id)
     setOverrides((p) => ({ ...p, [id]: 'cancelled' }))
   }
+
+  // Simulate a real-time incoming scheduled order arriving 3 seconds after mount.
+  // This gives kitchen staff a clean initial view (just the 2 live new orders),
+  // then demonstrates the scheduled-incoming notification flow.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setExtraOrders((prev) => {
+        // Skip if a scheduled incoming already exists (e.g. after reset + re-mount)
+        const hasScheduledIncoming = [...prev, ...orders].some(
+          (o) => o.status === 'needs_action' && o.pickupTime != null &&
+                 (o.pickupTime.getTime() - Date.now()) / 60000 >= 30
+        )
+        if (hasScheduledIncoming) return prev
+        const id = `sc-live-${Date.now()}`
+        const order: Order = {
+          id,
+          orderNumber: '10284001',
+          status: 'needs_action',
+          customer: { name: 'Rami B.', phone: '+97455334466', address: 'The Pearl-Qatar, Tower 7, Apt 14', tier: 'gold' },
+          branch: "McDonald's, Al Waab",
+          pickerEmail: 'staff@mcdonalds-waab.com',
+          items: [
+            { id: `${id}-i1`, quantity: 2, name: 'Quarter Pounder', barcode: '44001', unitPrice: 35, totalPrice: 70 },
+            { id: `${id}-i2`, quantity: 2, name: 'Medium Fries',    barcode: '44002', unitPrice: 10, totalPrice: 20 },
+          ],
+          subtotal: 90, discount: 0, deliveryFee: 15, total: 105,
+          paymentMethod: 'online', createdAt: new Date(), tags: [],
+          isDelivery: true, pickupTime: new Date(Date.now() + 4 * 60 * 60 * 1000),
+        }
+        return [...prev, order]
+      })
+    }, 3000)
+    return () => window.clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Auto-dismiss the "N is preparing" banner after 3s.
   useEffect(() => {
@@ -303,6 +348,7 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
         setMovedAt({})
         setHideBaseOrders(false)
         setCompletedIds(['rp-1', 'rp-5', 'rp-7', 'rp-9', 'rp-11'])
+        setDismissedCancellationIds([])
         announcedDueIdsRef.current = new Set()
       },
       enterSingleOrderDemo: () => {
@@ -373,6 +419,85 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
         }
         setExtraOrders([order])
       },
+      enterPremiumPriorityDemo: () => {
+        // Solo demo: one premium-priority order with the vertical strip decoration.
+        // Platinum tier + First Order + VIP flag — the full "treat this one specially" signal.
+        setOverrides({})
+        setPickupOverrides({})
+        setMovedAt({})
+        setCompletedIds([])
+        setHideBaseOrders(true)
+        announcedDueIdsRef.current = new Set()
+        const id = `demo-premium-${Date.now()}`
+        const order: Order = {
+          id,
+          orderNumber: '99999003',
+          status: 'needs_action',
+          customer: { name: 'Ali M.', phone: '+97400000003', address: 'KFC for Americana UAT, Al Ghanim', tier: 'platinum' },
+          branch: 'KFC, Al Ghanim', pickerEmail: 'vip-demo@demo.com',
+          items: [
+            { id: `${id}-i1`, quantity: 1, name: 'Zinger Stacker', barcode: '77001', unitPrice: 38, totalPrice: 38 },
+            { id: `${id}-i2`, quantity: 2, name: 'Hot Wings × 6',  barcode: '77002', unitPrice: 32, totalPrice: 64 },
+          ],
+          subtotal: 102, discount: 0, deliveryFee: 15, total: 117,
+          paymentMethod: 'online', createdAt: new Date(), tags: [],
+          isDelivery: true,
+          isFirstOrder: true,
+          isPremiumPriority: true,
+          prepareByTime: new Date(Date.now() + 15 * 60_000),
+          deliveryMode: 'snoonu',
+        }
+        setExtraOrders([order])
+      },
+      spawnPremiumPriorityOrder: () => {
+        // Adds a premium-priority order to the existing board (doesn't reset state).
+        // Useful for seeing the vertical strip alongside regular cards.
+        const id = `premium-${Date.now()}`
+        const order: Order = {
+          id,
+          orderNumber: String(77000000 + Math.floor(Math.random() * 999)),
+          status: 'needs_action',
+          customer: { name: 'Aisha K.', phone: '+97455009988', address: 'The Pearl, Tower 3, Apt 2010', tier: 'splus' },
+          branch: 'La Cigale, West Bay', pickerEmail: 'staff@lacigale.com',
+          items: [
+            { id: `${id}-i1`, quantity: 1, name: 'Wagyu Ribeye 300g', barcode: '77101', unitPrice: 220, totalPrice: 220 },
+            { id: `${id}-i2`, quantity: 1, name: 'Truffle Risotto',    barcode: '77102', unitPrice: 95,  totalPrice: 95  },
+          ],
+          subtotal: 315, discount: 0, deliveryFee: 20, total: 335,
+          paymentMethod: 'online', createdAt: new Date(), tags: ['Allergy: Dairy'],
+          isDelivery: true,
+          isFirstOrder: true,
+          isPremiumPriority: true,
+          prepareByTime: new Date(Date.now() + 20 * 60_000),
+          deliveryMode: 'snoonu',
+        }
+        setExtraOrders((prev) => [order, ...prev])
+      },
+      spawnCustomerCancelledOrder: () => {
+        // Simulates a customer cancelling their order. Card stays in New column with
+        // strikethrough + "Cancelled Order" pill until merchant dismisses via drawer overlay.
+        const id = `cancelled-${Date.now()}`
+        const order: Order = {
+          id,
+          orderNumber: String(75430000 + Math.floor(Math.random() * 9999)),
+          status: 'cancelled',
+          cancelledBy: 'customer',
+          customer: { name: 'Omar Y.', phone: '+97455443322', address: 'Al Waab, Villa 42', tier: 'platinum' },
+          branch: "McDonald's, Al Waab", pickerEmail: 'staff@mcdonalds-waab.com',
+          items: [
+            { id: `${id}-i1`, quantity: 1, name: 'Double Quarter Pounder', barcode: '88001', unitPrice: 45, totalPrice: 45 },
+            { id: `${id}-i2`, quantity: 1, name: 'Large Fries',             barcode: '88002', unitPrice: 12, totalPrice: 12 },
+          ],
+          subtotal: 57, discount: 0, deliveryFee: 15, total: 72,
+          paymentMethod: 'online', createdAt: new Date(), tags: [],
+          isDelivery: true,
+          isFirstOrder: true,
+        }
+        setExtraOrders((prev) => [order, ...prev])
+      },
+      dismissCancellation: (id: string) => {
+        setDismissedCancellationIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
+      },
     }
     return () => {
       if (boardRef) boardRef.current = null
@@ -384,6 +509,7 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
     else if (o.status === 'scheduled') handleStartPrep(o.id)
     else if (o.status === 'preparing' || o.status === 'looking_for_driver') handleReady(o.id)
     else if (o.status === 'ready_for_pickup' && o.deliveryMode === 'own') handlePickedUp(o.id)
+    else if (o.status === 'ready_for_pickup' && !o.isDelivery) handleDelivered(o.id) // takeaway: straight to completed
     else if (o.status === 'in_delivery' && o.deliveryMode === 'own') handleDelivered(o.id)
   }
 
@@ -409,8 +535,8 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
     } else if (target === 'ready') {
       if (isNew || isScheduled || isProgress) {
         handleReady(orderId)
-        // After Mark Ready, the order waits in "Ready" until courier takes it.
-        // In Delivery is auto-driven by driver.status === 'picking_up' from courier side.
+        // After Mark Ready, the order sits in "Ready" with status=ready_for_pickup.
+        // It moves to "In Delivery" when status flips to in_delivery (courier picked up).
         setDoneTab('ready')
       }
     } else if (target === 'completed') {
@@ -525,6 +651,7 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
             order={o}
             onAction={() => handleAction(o)}
             onReject={() => setRejectingOrderId(o.id)}
+            onDismiss={() => setDismissedCancellationIds((prev) => (prev.includes(o.id) ? prev : [...prev, o.id]))}
             onClick={() => onSelectOrder?.(o)}
           />
         ))}
@@ -571,11 +698,9 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
           style={{
             flex: completedOpen ? '1 1 0' : '1 1 auto',
             minHeight: 0,
-            background: 'var(--flock-color-bg-card)',
-            boxShadow: dragZone === 'ready'
-              ? 'inset 0 0 0 2px var(--flock-color-primary)'
-              : 'inset 0 0 0 1px rgba(0,0,0,0.04)',
-            transition: 'flex-grow 220ms ease, box-shadow 150ms ease',
+            background: dragZone === 'ready' ? 'rgba(217,2,23,0.06)' : 'var(--flock-color-bg-container)',
+            boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.04)',
+            transition: 'flex-grow 220ms ease, background 150ms ease',
           }}
         >
           <div
@@ -610,7 +735,7 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
               display: 'flex',
               flexDirection: 'column',
               gap: 12,
-              background: dragZone === 'ready' ? 'rgba(217,2,23,0.04)' : 'transparent',
+              background: 'transparent',
               transition: 'background 150ms ease',
             }}
             {...dropHandlers('ready')}
@@ -647,10 +772,8 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
           className="flex flex-col overflow-hidden rounded-xl"
           style={{
             flex: completedOpen ? '0 0 42%' : '0 0 56px',
-            background: 'var(--flock-color-bg-container)',
-            border: dragZone === 'completed'
-              ? '2px solid var(--flock-color-primary)'
-              : '1px solid var(--flock-color-border-secondary)',
+            background: dragZone === 'completed' ? 'rgba(217,2,23,0.06)' : 'var(--flock-color-bg-container)',
+            border: '1px solid var(--flock-color-border-secondary)',
             boxShadow: completedOpen
               ? '0 4px 16px rgba(0,0,0,0.06)'
               : '0 1px 2px rgba(0,0,0,0.04)',
@@ -942,11 +1065,9 @@ function Column({
     <div
       className="flex flex-col overflow-hidden min-h-0 rounded-xl"
       style={{
-        background: 'var(--flock-color-bg-card)',
-        boxShadow: isDragOver
-          ? 'inset 0 0 0 2px var(--flock-color-primary)'
-          : 'inset 0 0 0 1px rgba(0,0,0,0.04)',
-        transition: 'box-shadow 150ms ease',
+        background: isDragOver ? 'rgba(217,2,23,0.06)' : 'var(--flock-color-bg-container)',
+        boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.04)',
+        transition: 'background 150ms ease',
       }}
     >
       <div
@@ -966,8 +1087,8 @@ function Column({
           padding: 12,
           display: 'flex',
           flexDirection: 'column',
-          gap: 12,
-          background: isDragOver ? 'var(--flock-color-primary-bg, rgba(217,2,23,0.04))' : 'transparent',
+          gap: 16,
+          background: 'transparent',
           transition: 'background 150ms ease',
         }}
         {...(dropZone ?? {})}
