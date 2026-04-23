@@ -9,13 +9,23 @@ export type OrderStatus =
 
 export type DeliveryMode = 'snoonu' | 'own'
 
+export type CancelledBy = 'customer' | 'merchant'
+
 export type TabId = 'needs_action' | 'preparing' | 'ready_for_pickup'
 
 export type PaymentMethod = 'cash' | 'card' | 'online'
 
 export type CustomerTier = 'splus' | 'platinum' | 'gold' | 'standard'
 
-export type DriverStatus = 'on_route' | 'arrived' | 'picking_up'
+export type DriverStatus =
+  | 'looking'
+  | 'on_route'
+  | 'nearby'
+  | 'waiting'
+  | 'arrived'
+  | 'picking_up'
+  | 'customer_near'
+  | 'customer_arrived'
 
 export interface Driver {
   name: string
@@ -57,9 +67,11 @@ export interface Order {
   tags: string[]
   isDelivery: boolean
   isFirstOrder?: boolean
+  isPremiumPriority?: boolean
   customerNote?: string
   prepareByTime?: Date
   pickupTime?: Date
   driver?: Driver
   deliveryMode?: DeliveryMode
+  cancelledBy?: CancelledBy
 }
