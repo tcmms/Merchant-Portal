@@ -2,7 +2,6 @@ import type { RefObject } from 'react'
 import { X } from 'lucide-react'
 import { useDevTools } from './DevToolsContext'
 import { SectionLabel } from './components/SectionLabel'
-import { StateToggle } from './components/StateToggle'
 import { FlowButton } from './components/FlowButton'
 import type { ForcedState, PageDevHandle, LiveOrdersDevHandle, CatalogDevHandle } from './types'
 
@@ -10,22 +9,17 @@ type Page = 'live-orders' | 'menu-management'
 
 interface DevToolsPanelProps {
   activePage: Page
+  // forcedState/onForcedStateChange/onNavigate are kept in the prop interface so the
+  // parent contract doesn't change; the manager-facing UI hides the Screen/State sections.
   forcedState: ForcedState
   onForcedStateChange: (state: ForcedState) => void
   activeRef: RefObject<PageDevHandle | null>
   onNavigate: (page: Page) => void
 }
 
-const PAGE_LABELS: Record<Page, string> = {
-  'live-orders': 'Live Orders',
-  'menu-management': 'Catalog',
-}
-
-const ALL_PAGES: Page[] = ['live-orders', 'menu-management']
-
-export function DevToolsPanel({ activePage, forcedState, onForcedStateChange, activeRef, onNavigate }: DevToolsPanelProps) {
+export function DevToolsPanel({ activePage, onForcedStateChange, activeRef }: DevToolsPanelProps) {
   const { isOpen, toggle } = useDevTools()
-  const flows = getFlows(activePage, activeRef, onForcedStateChange)
+  const flowGroups = getFlowGroups(activePage, activeRef, onForcedStateChange)
 
   return (
     <div
@@ -72,51 +66,17 @@ export function DevToolsPanel({ activePage, forcedState, onForcedStateChange, ac
       {/* Content */}
       <div style={{ flex: 1, overflow: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-        {/* SCREEN */}
-        <div>
-          <SectionLabel>Screen</SectionLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {ALL_PAGES.map(page => (
-              <button
-                key={page}
-                onClick={() => onNavigate(page)}
-                style={{
-                  padding: '7px 12px',
-                  borderRadius: 8,
-                  border: '1px solid',
-                  borderColor: activePage === page ? '#161515' : '#e8e8e8',
-                  background: activePage === page ? '#161515' : 'white',
-                  color: activePage === page ? 'white' : 'rgba(0,0,0,0.65)',
-                  fontSize: 13,
-                  fontWeight: activePage === page ? 600 : 400,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 150ms',
-                }}
-              >
-                {PAGE_LABELS[page]}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* STATE */}
-        <div>
-          <SectionLabel>State</SectionLabel>
-          <StateToggle value={forcedState} onChange={onForcedStateChange} />
-        </div>
-
-        {/* FLOWS */}
-        {flows.length > 0 && (
-          <div>
-            <SectionLabel>Flows</SectionLabel>
+        {/* FLOW GROUPS */}
+        {flowGroups.map(group => (
+          <div key={group.label}>
+            <SectionLabel>{group.label}</SectionLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {flows.map(flow => (
+              {group.flows.map(flow => (
                 <FlowButton key={flow.label} label={flow.label} onClick={flow.action} />
               ))}
             </div>
           </div>
-        )}
+        ))}
       </div>
 
       {/* Footer */}
@@ -135,11 +95,23 @@ export function DevToolsPanel({ activePage, forcedState, onForcedStateChange, ac
   )
 }
 
-function getFlows(
+interface Flow {
+  label: string
+  description?: string
+  action: () => void
+}
+
+interface FlowGroup {
+  label: string
+  hint?: string
+  flows: Flow[]
+}
+
+function getFlowGroups(
   activePage: Page,
   ref: RefObject<PageDevHandle | null>,
   _onForcedStateChange: (s: ForcedState) => void,
-): { label: string; action: () => void }[] {
+): FlowGroup[] {
   const r = ref.current
 
   if (!r) return []
@@ -147,29 +119,48 @@ function getFlows(
   if (activePage === 'live-orders') {
     const lr = r as LiveOrdersDevHandle
     return [
-      { label: 'Select first order', action: () => lr.selectFirstOrder() },
-      { label: 'Trigger action loading (3s)', action: () => lr.triggerActionLoading() },
-      { label: 'Toggle empty state', action: () => lr.showEmptyState() },
-      { label: '🎬 Demo: single-order flow', action: () => lr.enterSingleOrderDemo() },
-      { label: '🚚 Demo: own-delivery flow', action: () => lr.enterOwnDeliveryDemo() },
-      { label: '⭐ Demo: premium priority', action: () => lr.enterPremiumPriorityDemo() },
-      { label: '⭐ Spawn premium-priority order', action: () => lr.spawnPremiumPriorityOrder() },
-      { label: '❌ Spawn customer-cancelled order', action: () => lr.spawnCustomerCancelledOrder() },
-      { label: '⏰ Force scheduled → due', action: () => lr.forceFirstScheduledDue() },
-      { label: '🔴 Force scheduled → overdue', action: () => lr.forceFirstScheduledOverdue() },
-      { label: '⏰ Spawn due-scheduled order', action: () => lr.spawnDueScheduled() },
-      { label: '↻ Reset scheduled overrides', action: () => lr.resetScheduledOverrides() },
+      {
+        label: 'Demos',
+        flows: [
+          { label: '🏪 Default screen',            action: () => lr.resetScheduledOverrides() },
+          { label: '🎬 Single order on the board', action: () => lr.enterSingleOrderDemo() },
+          { label: '🚚 Own-delivery order',        action: () => lr.enterOwnDeliveryDemo() },
+          { label: '⭐ VIP / premium priority',     action: () => lr.enterPremiumPriorityDemo() },
+        ],
+      },
+      {
+        label: 'Spawn',
+        flows: [
+          { label: '📞 Scheduled order arrives',    action: () => lr.spawnScheduledIncoming() },
+          { label: '⭐ VIP order arrives',          action: () => lr.spawnPremiumPriorityOrder() },
+          { label: '❌ Customer cancels order',     action: () => lr.spawnCustomerCancelledOrder() },
+          { label: '⏰ Scheduled order due now',    action: () => lr.spawnDueScheduled() },
+        ],
+      },
+      {
+        label: 'Edge cases',
+        flows: [
+          { label: '⚠️ Urgent prep alert',          action: () => lr.triggerUrgentPrepBanner() },
+          { label: '⏰ Scheduled → due',            action: () => lr.forceFirstScheduledDue() },
+          { label: '🔴 Scheduled → overdue',       action: () => lr.forceFirstScheduledOverdue() },
+        ],
+      },
     ]
   }
 
   if (activePage === 'menu-management') {
     const cr = r as CatalogDevHandle
     return [
-      { label: 'Open product drawer', action: () => cr.openProductDrawer() },
-      { label: 'Open bulk update modal', action: () => cr.openBulkUpdateModal() },
-      { label: 'Trigger spotlight tour', action: () => cr.triggerSpotlight() },
-      { label: 'Select all items', action: () => cr.selectAllItems() },
-      { label: 'Switch to rejected view', action: () => cr.switchToRejectedView() },
+      {
+        label: 'Catalog',
+        flows: [
+          { label: 'Open product drawer',         action: () => cr.openProductDrawer() },
+          { label: 'Open bulk update modal',      action: () => cr.openBulkUpdateModal() },
+          { label: 'Trigger spotlight tour',      action: () => cr.triggerSpotlight() },
+          { label: 'Select all items',            action: () => cr.selectAllItems() },
+          { label: 'Switch to rejected view',     action: () => cr.switchToRejectedView() },
+        ],
+      },
     ]
   }
 

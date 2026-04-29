@@ -10,12 +10,15 @@ export interface KanbanBoardHandle {
   forceFirstScheduledDue: () => boolean
   forceFirstScheduledOverdue: () => boolean
   spawnDueScheduled: () => void
+  spawnScheduledIncoming: () => boolean
+  triggerUrgentPrepBanner: () => boolean
   enterSingleOrderDemo: () => void
   enterOwnDeliveryDemo: () => void
   enterPremiumPriorityDemo: () => void
   spawnPremiumPriorityOrder: () => void
   spawnCustomerCancelledOrder: () => void
   dismissCancellation: (id: string) => void
+  markOrderOutOfStock: (id: string) => void
   resetOverrides: () => void
   acceptOrder: (id: string) => void
   startPreparation: (id: string) => void
@@ -65,6 +68,7 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
   const [completedIds, setCompletedIds] = useState<string[]>(() => ['rp-1', 'rp-5', 'rp-7', 'rp-9', 'rp-11'])
   const [completedOpen, setCompletedOpen] = useState(false)
   const [dismissedCancellationIds, setDismissedCancellationIds] = useState<string[]>([])
+  const [oosRemovedIds, setOosRemovedIds] = useState<string[]>([])
   const [dragZone, setDragZone] = useState<'progress' | 'ready' | 'completed' | null>(null)
   const [movedAt, setMovedAt] = useState<Record<string, number>>({})
 
@@ -123,6 +127,7 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
 
     const tickNow = clockTick
     for (const o of resolved) {
+      if (oosRemovedIds.includes(o.id)) continue // merchant marked items OOS → card removed
       if (completedIds.includes(o.id)) { completed.push(o); continue }
       if (o.status === 'cancelled') {
         // Customer-initiated cancellations surface in New until the merchant dismisses
@@ -183,7 +188,7 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
     })
 
     return { newOrders, scheduled, inProgress, ready, inDelivery, completed }
-  }, [resolved, completedIds, movedAt, clockTick, dismissedCancellationIds])
+  }, [resolved, completedIds, movedAt, clockTick, dismissedCancellationIds, oosRemovedIds])
 
   const overdueOrders = useMemo(
     () => buckets.newOrders.filter((o) => isScheduledOverdue(o, clockTick)),
@@ -232,41 +237,6 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
     stampMove(id)
     setOverrides((p) => ({ ...p, [id]: 'cancelled' }))
   }
-
-  // Simulate a real-time incoming scheduled order arriving 3 seconds after mount.
-  // This gives kitchen staff a clean initial view (just the 2 live new orders),
-  // then demonstrates the scheduled-incoming notification flow.
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setExtraOrders((prev) => {
-        // Skip if a scheduled incoming already exists (e.g. after reset + re-mount)
-        const hasScheduledIncoming = [...prev, ...orders].some(
-          (o) => o.status === 'needs_action' && o.pickupTime != null &&
-                 (o.pickupTime.getTime() - Date.now()) / 60000 >= 30
-        )
-        if (hasScheduledIncoming) return prev
-        const id = `sc-live-${Date.now()}`
-        const order: Order = {
-          id,
-          orderNumber: '10284001',
-          status: 'needs_action',
-          customer: { name: 'Rami B.', phone: '+97455334466', address: 'The Pearl-Qatar, Tower 7, Apt 14', tier: 'gold' },
-          branch: "McDonald's, Al Waab",
-          pickerEmail: 'staff@mcdonalds-waab.com',
-          items: [
-            { id: `${id}-i1`, quantity: 2, name: 'Quarter Pounder', barcode: '44001', unitPrice: 35, totalPrice: 70 },
-            { id: `${id}-i2`, quantity: 2, name: 'Medium Fries',    barcode: '44002', unitPrice: 10, totalPrice: 20 },
-          ],
-          subtotal: 90, discount: 0, deliveryFee: 15, total: 105,
-          paymentMethod: 'online', createdAt: new Date(), tags: [],
-          isDelivery: true, pickupTime: new Date(Date.now() + 4 * 60 * 60 * 1000),
-        }
-        return [...prev, order]
-      })
-    }, 3000)
-    return () => window.clearTimeout(timer)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   // Auto-dismiss the "N is preparing" banner after 3s.
   useEffect(() => {
@@ -341,6 +311,44 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
         }
         setExtraOrders((prev) => [order, ...prev])
       },
+      spawnScheduledIncoming: () => {
+        // Drops a scheduled-incoming card (Rami B., pickup ~4 hours away). Surfaces in
+        // New as the special blue-Accept variant + the "moved to Scheduled" banner flow.
+        let added = false
+        setExtraOrders((prev) => {
+          const hasScheduledIncoming = [...prev, ...resolvedRef.current].some(
+            (o) => o.status === 'needs_action' && o.pickupTime != null &&
+                   (o.pickupTime.getTime() - Date.now()) / 60000 >= 30
+          )
+          if (hasScheduledIncoming) return prev
+          const id = `sc-live-${Date.now()}`
+          const order: Order = {
+            id,
+            orderNumber: '10284001',
+            status: 'needs_action',
+            customer: { name: 'Rami B.', phone: '+97455334466', address: 'The Pearl-Qatar, Tower 7, Apt 14', tier: 'gold' },
+            branch: "McDonald's, Al Waab",
+            pickerEmail: 'staff@mcdonalds-waab.com',
+            items: [
+              { id: `${id}-i1`, quantity: 2, name: 'Quarter Pounder', barcode: '44001', unitPrice: 35, totalPrice: 70 },
+              { id: `${id}-i2`, quantity: 2, name: 'Medium Fries',    barcode: '44002', unitPrice: 10, totalPrice: 20 },
+            ],
+            subtotal: 90, discount: 0, deliveryFee: 15, total: 105,
+            paymentMethod: 'online', createdAt: new Date(), tags: [],
+            isDelivery: true, pickupTime: new Date(Date.now() + 4 * 60 * 60 * 1000),
+          }
+          added = true
+          return [...prev, order]
+        })
+        return added
+      },
+      triggerUrgentPrepBanner: () => {
+        // Reveals the "N minutes left for preparing…" volcano banner over In Progress.
+        // Requires an in-progress order with SLA in (0, 10] min — pr-1 (Sara M., eta 3m) qualifies.
+        setBannerDismissed(false)
+        setBannerReady(true)
+        return true
+      },
       resetOverrides: () => {
         setOverrides({})
         setPickupOverrides({})
@@ -349,6 +357,9 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
         setHideBaseOrders(false)
         setCompletedIds(['rp-1', 'rp-5', 'rp-7', 'rp-9', 'rp-11'])
         setDismissedCancellationIds([])
+        setOosRemovedIds([])
+        setBannerReady(false)
+        setBannerDismissed(false)
         announcedDueIdsRef.current = new Set()
       },
       enterSingleOrderDemo: () => {
@@ -498,6 +509,10 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
       dismissCancellation: (id: string) => {
         setDismissedCancellationIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
       },
+      markOrderOutOfStock: (id: string) => {
+        stampMove(id)
+        setOosRemovedIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
+      },
     }
     return () => {
       if (boardRef) boardRef.current = null
@@ -573,11 +588,6 @@ export function KanbanBoard({ orders, onSelectOrder, boardRef }: KanbanBoardProp
   const [bannerReady, setBannerReady] = useState(false)
   const [bannerDismissed, setBannerDismissed] = useState(false)
   const now = useClock(30_000)
-
-  useEffect(() => {
-    const id = window.setTimeout(() => setBannerReady(true), 5000)
-    return () => window.clearTimeout(id)
-  }, [])
 
   const urgentOrder = useMemo(() => {
     if (!bannerReady || bannerDismissed) return null

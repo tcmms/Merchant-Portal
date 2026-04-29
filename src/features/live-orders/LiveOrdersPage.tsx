@@ -39,6 +39,14 @@ export const LiveOrdersPage = forwardRef<LiveOrdersDevHandle, LiveOrdersPageProp
       itemIds.forEach((id) => merged.add(id))
       return { ...prev, [orderId]: merged }
     })
+    // Kanban mode: drop the card from the board and close the drawer — merchant resolved
+    // the OOS situation, the order shouldn't keep occupying the kitchen view.
+    if (layoutMode === 'kanban' && kanbanRef.current) {
+      const orderNumber = selectedOrder?.orderNumber ?? ''
+      kanbanRef.current.markOrderOutOfStock(orderId)
+      setSelectedOrder(null)
+      toast.warning(orderNumber ? `Order #${orderNumber} removed — items out of stock` : 'Order removed — items out of stock')
+    }
   }
 
   const selectedOosItems = selectedOrder ? oosByOrderId[selectedOrder.id] : undefined
@@ -86,6 +94,23 @@ export const LiveOrdersPage = forwardRef<LiveOrdersDevHandle, LiveOrdersPageProp
       kanbanRef.current?.spawnDueScheduled()
       toast.success('Spawned a due scheduled order (pickup in 15 min)')
     },
+    spawnScheduledIncoming: () => {
+      if (layoutMode !== 'kanban') {
+        toast.info('Switch to Kanban layout to spawn scheduled-incoming orders')
+        return
+      }
+      const ok = kanbanRef.current?.spawnScheduledIncoming() ?? false
+      toast[ok ? 'success' : 'info'](
+        ok ? 'Scheduled-incoming order arrived in New' : 'A scheduled-incoming order is already on the board',
+      )
+    },
+    triggerUrgentPrepBanner: () => {
+      if (layoutMode !== 'kanban') {
+        toast.info('Switch to Kanban layout to trigger the urgent-prep banner')
+        return
+      }
+      kanbanRef.current?.triggerUrgentPrepBanner()
+    },
     enterSingleOrderDemo: () => {
       if (layoutMode !== 'kanban') {
         toast.info('Switch to Kanban layout to run the single-order demo')
@@ -128,7 +153,7 @@ export const LiveOrdersPage = forwardRef<LiveOrdersDevHandle, LiveOrdersPageProp
     },
     resetScheduledOverrides: () => {
       kanbanRef.current?.resetOverrides()
-      toast.info('Scheduled overrides cleared')
+      toast.info('Board reset to initial state')
     },
   }))
 

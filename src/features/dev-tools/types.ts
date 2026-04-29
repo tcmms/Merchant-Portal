@@ -9,6 +9,8 @@ export interface LiveOrdersDevHandle extends PageDevHandle {
   forceFirstScheduledDue: () => void
   forceFirstScheduledOverdue: () => void
   spawnDueScheduled: () => void
+  spawnScheduledIncoming: () => void
+  triggerUrgentPrepBanner: () => void
   enterSingleOrderDemo: () => void
   enterOwnDeliveryDemo: () => void
   enterPremiumPriorityDemo: () => void
